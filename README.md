@@ -1,7 +1,7 @@
 # ndplex
 The n-Dimensional m-Plex (ndplex) Array: a generic Pascal's array in Python
 
-includes python class ndplex(np.ndarray):
+includes Python class ndplex(np.ndarray):
 
     Class of n-Dimensional m-Plex (ndplex) array object, representing generic 
     Pascal's rectangle, cube, or higher dimension array. By default, object is a 
