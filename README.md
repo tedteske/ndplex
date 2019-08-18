@@ -30,7 +30,7 @@ includes Python class ndplex(np.ndarray):
     as_tri() : Prints ndplex as a triangle (if 2D), tetrahedron (if 3D),
                 4-simplex (if 4D), etc.
                 
-and the following supporting functions:
+and the following aditional utility functions:
 
 oeis(array, size=None, trim=False):
     Searches OEIS.org for sequence in each array row and prints results.
