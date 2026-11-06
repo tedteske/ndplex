@@ -246,13 +246,15 @@ def test_arg_locs_none_concave_surface():
 
 # --- modular arithmetic (the heatmap examples) --------------------------------
 
-@pytest.mark.filterwarnings("ignore:overflow encountered:RuntimeWarning")
 def test_sierpinski_mod_2_matches_lucas():
     """Cell 132: C(i+j, i) is odd exactly when i & j == 0 (Lucas). Holds on
-    the int64 array even past overflow, because int64 wraps modulo 2**64."""
+    the int64 array even past overflow, because int64 wraps modulo 2**64.
+    Phase 2: construction now warns about the overflow (C3)."""
     n = 100
     i, j = np.indices((n, n))
-    assert_array_equal(ndplex(n) % 2, ((i & j) == 0).astype(int))
+    with pytest.warns(RuntimeWarning, match="overflowed"):
+        p = ndplex(n)
+    assert_array_equal(p % 2, ((i & j) == 0).astype(int))
 
 
 def test_mod_inside_func_is_exact():

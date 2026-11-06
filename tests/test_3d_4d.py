@@ -5,7 +5,9 @@ Values are the notebook's saved outputs ("First 3D examples", cells 46-63;
 "The Special Case of func=lambda x:1", cells 163-181; "More than 2
 dimensions", cells 270-271), plus multinomial property checks.
 """
+import itertools
 import math
+import random
 
 import numpy as np
 import pytest
@@ -197,3 +199,111 @@ def test_3d_prime_edge():
                         14284168470, 345153963440])
     assert_array_equal(prime_xd.as_tri(sums=True),
                        [1, 4, 13, 41, 125, 379, 1139, 3421, 10265, 30799])
+
+
+def test_diag_with_partial_loc_returns_sub_arrays():
+    """A loc with fewer coordinates than dimensions starts at a sub-array
+    (the docstring's "1D array"): the result stacks whole layers or lines.
+    Pinned in Phase 2 from the notebook code's behaviour (checked equal to
+    tests/ndplex_original.py), not from a notebook example."""
+    p = ndplex(4, edges=3)
+    layers = p.diag(loc=(1,), move=(1,))
+    assert layers.shape == (3, 4, 4)
+    assert_array_equal(layers, np.asarray(p)[1:])
+    lines = p.diag(loc=(0, 1), move=(1, 0))
+    assert_array_equal(lines, np.asarray(p)[:, 1])
+    # The default move steps along the axes loc fixes (one step each).
+    assert_array_equal(p.diag(loc=(1,)), layers)
+    assert_array_equal(ndplex(4).diag(loc=(1,)), np.asarray(ndplex(4))[1:])
+
+
+# --- diag in 4-D and 5-D against a brute-force reference (Phase 2 review) --
+
+def _diag_reference(A, loc, moves):
+    """diag from its definition, with plain loops: result[a_(m-1), ..., a_0]
+    is the node (or sub-array) at loc + sum_i a_i * move_i, 0 outside the
+    array; squeezed; each axis ends at its last position inside the array."""
+    A = np.asarray(A)
+    S, k, m = A.shape, len(loc), len(moves)
+    L = max(S)
+    out = np.zeros((L,) * m + S[k:], dtype=object)
+    ins = np.zeros((L,) * m, dtype=bool)
+    for a in itertools.product(range(L), repeat=m):   # a[j] steps move m-1-j
+        p = list(loc)
+        for j, aj in enumerate(a):
+            p = [p[d] + aj * moves[m - 1 - j][d] for d in range(k)]
+        if all(0 <= p[d] < S[d] for d in range(k)):
+            out[a], ins[a] = A[tuple(p)], True
+    ins = np.broadcast_to(ins.reshape(ins.shape + (1,) * (A.ndim - k)), out.shape)
+    out, ins = np.squeeze(out), np.squeeze(ins)
+    ends = []
+    for ax in range(out.ndim):
+        hits = np.flatnonzero(ins.any(axis=tuple(x for x in range(out.ndim) if x != ax)))
+        ends.append(slice(hits[-1] + 1 if hits.size else 0))
+    return out[tuple(ends)]
+
+
+@pytest.mark.parametrize("array", [
+    ndplex(4, edges=4),
+    ndplex(4, edges=4, func=lambda x: x[0] - x[-1]),     # many genuine zeros
+    ndplex(3, edges=5),
+    ndplex(5, edges=4)[1:, :3, 2:, :],                   # non-cubic slice
+    ndplex(3, edges=5)[:, 1:2, :, :2, :],                # a side of length 1
+], ids=["4d", "4d-zeros", "5d", "4d-slice", "5d-thin"])
+def test_diag_matches_reference_in_4d_and_5d(array):
+    """Random locs (full and partial, some outside), 1-4 moves. Checked
+    against the reference above, not against the notebook (which cannot
+    handle slices or genuine zeros)."""
+    rng = random.Random(4)
+    S = array.shape
+    for _ in range(60):
+        k = rng.randint(1, array.ndim)
+        loc = tuple(rng.randint(-1, S[d]) for d in range(k))
+        moves = [tuple(rng.randint(-2, 2) for _ in range(k))
+                 for _ in range(rng.randint(1, min(4, k)))]
+        if any(not any(mv) for mv in moves):
+            continue
+        got = array.diag(loc=loc, move=moves)
+        want = _diag_reference(array, loc, moves)
+        assert got.shape == want.shape and (got == want).all(), (loc, moves)
+
+
+def test_axis_aligned_moves_are_numpy_slices_in_5d():
+    p = ndplex(4, edges=5)
+    a, e = np.asarray(p), np.eye(5, dtype=int)
+    assert_array_equal(p.diag(loc=(0, 2, 0, 0, 0), move=[e[3], e[2], e[0]]),
+                       a[:, 2, :, :, 0])
+    assert_array_equal(p.diag(loc=(1, 0, 3, 0, 2), move=[e[3], e[1]]),
+                       a[1, :, 3, :, 2])
+    assert_array_equal(p.diag(move=[e[4], e[3], e[2], e[1], e[0]]), a)
+
+
+@pytest.mark.parametrize("d, n", [(2, 6), (3, 6), (4, 5), (5, 4), (6, 4)])
+def test_as_tri_layers_are_left_justified(d, n):
+    """Phase 2, decision (b): tri[k][x_1, ..., x_(d-1)] is the node with
+    those coordinates on the axes other than axis d-2, in order, and
+    k - sum(x) on axis d-2; positions with sum(x) > k are padding (0).
+    Unequal edges make the array asymmetric, so a swapped axis would show.
+    The notebook's layout matched this in 2-D and 3-D only; from 4-D up it
+    was sheared (docs/phase2_package.md, C11).
+    Migration: index 4-D and higher layers as described above; values and
+    sums are unchanged."""
+    p = ndplex(n, edges=tuple(range(1, d + 1)), dtype=object)
+    a = np.asarray(p)
+    tri = p.as_tri()
+    for k in range(n):
+        for x in itertools.product(range(n), repeat=d - 1):
+            s = sum(x)
+            if s <= k:
+                node = x[:d - 2] + (k - s,) + x[d - 2:]
+                assert tri[k][x] == a[node], (k, x)
+            else:
+                assert tri[k][x] == 0, (k, x)
+
+
+def test_as_tri_4d_example():
+    """Layer 3 of the default 4-D array, slice a = 1: C(3, 1) = 3 times
+    layer 2 of the 3-D array (the trinomial triangle 1 2 1 / 2 2 / 1),
+    justified left."""
+    assert_array_equal(ndplex(4, edges=4).as_tri()[3][1],
+                       [[3, 6, 3, 0], [6, 6, 0, 0], [3, 0, 0, 0], [0, 0, 0, 0]])

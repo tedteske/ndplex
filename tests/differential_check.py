@@ -1,0 +1,124 @@
+"""
+Differential check: the package against the notebook's original code.
+
+Compares ndplex (installed package) with tests/ndplex_original.py on inputs
+where Phase 2 says nothing should change: construction with edges, func and
+arg_locs that stay inside the array, in 1-4 dimensions; random diag calls
+(one to four moves) on 2-D to 5-D arrays with no genuine zeros; as_tri for
+every start/end (identical in 2-D and 3-D; from 4-D up the same sums and the
+same values per layer, since the package's layers are left-justified there
+and the notebook's were sheared); and a loc that fixes only some axes, with
+the default move.
+Calls on which the original raises (all-padding lines, audit
+finding N2) are skipped; those are covered by the regression suite.
+
+    pip install -e . scipy seaborn requests matplotlib
+    python tests/differential_check.py
+
+The original needs its own imports (scipy, seaborn, requests, matplotlib),
+so this is not part of the pytest run. Result in Phase 2 (6 Nov 2026):
+all equal, 4822 comparisons.
+"""
+import importlib.util
+import itertools
+import pathlib
+import random
+import warnings
+
+import numpy as np
+
+ORIGINAL = pathlib.Path(__file__).with_name("ndplex_original.py")
+
+
+def load_original():
+    spec = importlib.util.spec_from_file_location("ndplex_original", ORIGINAL)
+    mod = importlib.util.module_from_spec(spec)
+    with warnings.catch_warnings():  # the original silences all warnings
+        spec.loader.exec_module(mod)
+    return mod
+
+
+def same(a, b):
+    a, b = np.asarray(a), np.asarray(b)
+    return a.shape == b.shape and (a == b).all()
+
+
+def main(seed=1):
+    orig = load_original()
+    from ndplex import ndplex as new
+    warnings.simplefilter("ignore")  # overflow warnings are expected
+    rng = random.Random(seed)
+    n_checks = 0
+
+    # 1. Construction.
+    cases = []
+    for ndim in (1, 2, 3, 4):
+        for n in (1, 2, 3, 5, 7):
+            if ndim == 4 and n > 5:
+                continue
+            cases.append(dict(nrows=n, edges=ndim))
+            cases.append(dict(nrows=n, edges=tuple(rng.randint(1, 5)
+                                                   for _ in range(ndim))))
+    for n in (3, 6, 9):
+        cases += [
+            dict(nrows=n, edges=(list(range(1, n + 1)), 2)),
+            dict(nrows=n, edges=(1, 1), func=lambda x: x[0] * 2 + x[1]),
+            dict(nrows=n, edges=(1, 1), arg_locs=[[-1, 0], [0, -1], [-1, -1]]),
+            dict(nrows=n, edges=(1, 1), arg_locs=[[None, 0], [0, None]],
+                 func=lambda x: x[0] + x[1]),
+            dict(nrows=n, edges=(2, 3), dtype=float, func=lambda x: sum(x) / 2),
+            dict(nrows=n, edges=(1, 1), dtype=object),
+        ]
+    for kw in cases:
+        assert same(orig.ndplex(**kw), new(**kw)), kw
+        n_checks += 1
+
+    # 2. diag and as_tri on arrays with no genuine zeros.
+    sizes = {2: (1, 2, 4, 6, 9), 3: (1, 2, 4, 6, 9), 4: (3, 5), 5: (3, 4)}
+    for d, ns in sizes.items():
+        for n in ns:
+            p, o = new(n, edges=d), orig.ndplex(n, edges=d)
+            combos = [((), ())]
+            for _ in range(150):
+                loc = tuple(rng.randint(0, n - 1) for _ in range(d))
+                nm = rng.randint(1, min(4, d))
+                move = [tuple(rng.randint(-3, 3) for _ in range(d))
+                        for _ in range(nm)]
+                if any(all(v == 0 for v in m) for m in move):
+                    continue
+                combos.append((loc, move if nm > 1 else move[0]))
+            for loc, move in combos:
+                for sum_axis in (None, 0):
+                    try:
+                        want = o.diag(loc=loc, move=move, sum_axis=sum_axis)
+                    except Exception:
+                        continue
+                    got = p.diag(loc=loc, move=move, sum_axis=sum_axis)
+                    assert same(want, got), (n, d, loc, move, sum_axis)
+                    n_checks += 1
+            # A loc that fixes only some axes (sub-arrays), default move.
+            # (Not for n = 1: there the notebook's result kept a squeezed
+            # padding axis; the package gives 0-d, as for a full loc.)
+            for loc in [] if n == 1 else [(i,) for i in range(n)] + (
+                    [(i, j) for i in range(n) for j in range(n)] if d == 3 else []):
+                assert same(o.diag(loc=loc), p.diag(loc=loc)), (n, d, loc)
+                n_checks += 1
+            if n > 1:
+                # From 4-D up the package's as_tri layers are left-justified
+                # (decision (b)); the notebook's were sheared. Values and
+                # sums are the same, so compare the layouts in 2-D and 3-D,
+                # and the sums and sorted values in every dimension.
+                for s, e in itertools.combinations_with_replacement(range(n), 2):
+                    assert same(o.as_tri(s, e, True), p.as_tri(s, e, True))
+                    n_checks += 1
+                    if d <= 3:
+                        assert same(o.as_tri(s, e), p.as_tri(s, e))
+                    else:
+                        for lo, ln in zip(o.as_tri(s, e), p.as_tri(s, e)):
+                            assert same(np.sort(lo, axis=None), np.sort(ln, axis=None))
+                    n_checks += 1
+    print(f"all equal; {n_checks} comparisons")
+
+
+if __name__ == "__main__":
+    main()

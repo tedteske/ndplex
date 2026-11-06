@@ -15,6 +15,8 @@ This repository contains work of three kinds. They are kept apart so that credit
 
 - *Phase 1 audit* (`docs/phase1_audit.md`): running the notebook against current libraries; the findings on import side effects, the ndarray subclass, integer overflow (where it starts, why residues modulo powers of 2 survive it, and that part of the Fibonacci-mod-7 heatmap is overflow), arg_locs that wrap around the array, diag trimming genuine zeros, and oeis hiding network errors; the proposed 0.1.0 API.
 - *Phase 1 regression suite* (`tests/`): the notebook's printed results pinned as tests, the property checks (binomial, multinomial, Lucas's theorem, digital roots), the known-issue tests, the offline OEIS stub and primes sieve, and the mutation check (`tests/mutation_check.py`).
+- *Phase 2 package* (`src/ndplex`, `pyproject.toml`, `docs/phase2_package.md`): the package layout and lazy loading of `oeis`; the fixes for the Phase 1 findings (no import side effects, a single overflow warning naming the first overflowed node, exact `dtype=object` sums, derived arrays that keep working and pickle, zero padding for `arg_locs` outside the array, `diag` ending by geometry rather than at the first trailing zeros, argument checks, and `oeis` over https with failures reported and a `quiet` mode). The class's design, its node-generation loop, the edge-filling rotation, the `diag` move arithmetic and `as_tri` as a series of cross-sections (with its 2-D and 3-D moves) are Ted's, kept from the notebook (tier A). The `as_tri` moves for 4-D and up were changed in review so that layers are left-justified in every dimension (Ted's choice between the two layouts; the finding and the new move rule were made with Claude).
+- *Phase 2 tests*: the suite moved to the package, the known-issue tests rewritten to the fixed behaviour, the new package, overflow, pickling and `oeis` tests, the differential check against the notebook code, and the mutation check adapted to the package.
 
 **C. Third-party work, cited below**
 
@@ -22,12 +24,14 @@ Attribution suggestion, not a rule: the usual convention in published work is th
 
 ### References
 
-**Code adapted in the library cell**
+**General source.** Ted cites Thomas M. Green's *The Simplex, Duplex and Pascal's Triangles* (2015; reference 10 below) as a general source for ndplex. The book covers Pascal's triangle and its relatives, simplexes, duplexes and higher-dimensional extensions, and recurrent sequences such as Fibonacci.
+
+**Code adapted in the notebook's library cell (not in the package)**
 
 1. `trim_trailing_zeros` (inside `diag`) is adapted from an answer to "Trim trailing zeros of a numpy array along each axis", Stack Overflow question 55917328. https://stackoverflow.com/questions/55917328
 2. The query inside `oeis` is adapted from Andrew Walker's `oeis` package. https://github.com/AndrewWalker/oeis — its `setup.py` declares a BSD license; the repository has no LICENSE file (checked November 2026).
 
-*Stack Overflow contributions are licensed CC BY-SA. Retaining the attribution above satisfies the attribution requirement; the share-alike term is a packaging question, raised in the Phase 1 audit (decision D9).*
+*Both are kept here as history. The package does not contain either (decision D9): `diag` now ends where its moves leave the array (`_trim_outside` in `src/ndplex/_core.py`, written from scratch for the change in behaviour) and `oeis`'s request is written from scratch with the standard library. The notebook (`ndplex_array.ipynb`) still contains the originals.*
 
 **Code and data used only in the notebook's examples**
 
@@ -41,7 +45,7 @@ Attribution suggestion, not a rule: the usual convention in published work is th
 7. Pascal's triangle and the bell curve. AMS Feature Column. http://www.ams.org/publicoutreach/feature-column/fcarc-normal
 8. Pascal's triangle modulo n (Sierpinski's gasket). http://orion.math.iastate.edu/reu/oldREU/modupasc.htm
 9. Hypercube; Simplex. Wikipedia. https://en.wikipedia.org/wiki/Hypercube, https://en.wikipedia.org/wiki/Simplex
-10. *Simplex, Duplex and Pascal's Triangles: Excursions*. https://www.amazon.com/Simplex-Duplex-Pascals-Triangles-Excursions/dp/1514677091
+10. Green, Thomas M. *The Simplex, Duplex and Pascal's Triangles: Relatives of Pascal's Triangle, with Excursions Into Hyperspace*. CreateSpace Independent Publishing Platform, 2015. 176 pp. ISBN 9781514677094. https://books.google.com/books/about/The_Simplex_Duplex_and_Pascal_s_Triangle.html?id=P0cDswEACAAJ (also cited in the notebook, via https://www.amazon.com/Simplex-Duplex-Pascals-Triangles-Excursions/dp/1514677091). **A general source for the project** (see the note above), not only for the notebook section that cites it.
 11. Narayana's cows sequence, OEIS A000930 (https://oeis.org/A000930), and the paper linked from the notebook (JIM 96 proceedings). http://jim.afim-asso.org/jim96/actes/Allouche.ps
 
 **Used in the Phase 1 tests**

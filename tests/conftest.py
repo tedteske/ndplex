@@ -1,4 +1,4 @@
-"""Shared test setup: no network, no stray figures."""
+"""Shared test setup: no network."""
 import socket
 
 import pytest
@@ -11,10 +11,3 @@ def _no_network(monkeypatch):
         raise OSError("network access is disabled in the test suite")
     monkeypatch.setattr(socket.socket, "connect", refuse)
     monkeypatch.setattr(socket, "create_connection", refuse)
-
-
-@pytest.fixture(autouse=True)
-def _close_figures():
-    yield
-    import matplotlib.pyplot as plt
-    plt.close("all")

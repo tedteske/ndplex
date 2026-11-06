@@ -52,21 +52,26 @@ def test_fibonacci_from_diagonal_sums():
     assert_array_equal(fibs, [1, 1, 2, 3, 5, 8, 13, 21, 34])
 
 
-@pytest.mark.filterwarnings("ignore:overflow encountered:RuntimeWarning")
 def test_fibonacci_50_and_golden_ratio():
     """ndplex(50) overflows int64 in its far corner (audit F5), but the
-    nodes on these diagonals stay small, so the sums are exact."""
-    fibs = ndplex(50).diag(move=[(-2, 1), (1, 0)], sum_axis=1)
+    nodes on these diagonals stay small, so the sums are exact.
+    Phase 2: construction now warns about the overflow (C3)."""
+    with pytest.warns(RuntimeWarning, match="overflowed"):
+        p50 = ndplex(50)
+    fibs = p50.diag(move=[(-2, 1), (1, 0)], sum_axis=1)
     assert [int(f) for f in fibs] == fibonaccis(50)
     assert fibs[-1] / fibs[-2] == pytest.approx(1.618033988749895, rel=1e-15)
 
 
-@pytest.mark.filterwarnings("ignore:overflow encountered:RuntimeWarning")
 def test_narayana_cows():
+    """Phase 2: ndplex(50) now warns about overflow in its far corner (C3);
+    the diagonal sums used here are exact."""
     p = ndplex(9)
     assert_array_equal(p.diag(move=[(-3, 1), (1, 0)], sum_axis=1),
                        [1, 1, 1, 2, 3, 4, 6, 9, 13])
-    cows = ndplex(50).diag(move=[(-3, 1), (1, 0)], sum_axis=1)
+    with pytest.warns(RuntimeWarning, match="overflowed"):
+        p50 = ndplex(50)
+    cows = p50.diag(move=[(-3, 1), (1, 0)], sum_axis=1)
     assert [int(c) for c in cows] == narayana(50)
     year, lifespan = 20, 6
     assert cows[year] == 1278

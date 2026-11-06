@@ -1,19 +1,29 @@
 """
 Mutation check for the regression suite.
 
-Makes one small change at a time to the implementation (tests/ndplex_original.py
-by default), runs the suite against the changed copy, and records whether
-any test failed ("killed") or all passed ("survived"). A survivor is either
-an equivalent change (same behaviour) or a gap in the tests.
+Makes one small change at a time to the package's source (src/ndplex/_core.py
+and src/ndplex/_oeis.py by default), runs the suite against a copy of the
+package containing the change, and records whether any test failed
+("killed") or all passed ("survived"). A survivor is either an equivalent
+change (same behaviour) or a gap in the tests.
 
-    python tests/mutation_check.py                   # ndplex class + oeis
-    python tests/mutation_check.py --scope ndplex    # just the class
+    python tests/mutation_check.py                       # the whole package
+    python tests/mutation_check.py --src src/ndplex/_oeis.py
+    python tests/mutation_check.py --scope ndplex        # just the class
     python tests/mutation_check.py --jobs 4 --json out.json
 
-Operators: arithmetic (+ - * / % |), comparisons (< <= > >= == != is is-not),
-integer constants (n -> n+1, n -> n-1), unary minus removed, and/or swapped,
-if-conditions negated, string constants changed, True/False flipped, and
-each statement in a function body replaced by `pass`.
+Run it with the Python that has the package's test dependencies installed.
+Each mutant is a full copy of src/ndplex in a temporary directory, passed to
+the suite through NDPLEX_IMPL_PATH (see tests/_impl.py).
+
+Operators: arithmetic (+ - * / % | &), comparisons (< <= > >= == != is
+is-not in not-in), integer constants (n -> n+1, n -> n-1), unary minus
+removed, and/or swapped, if/while conditions negated, string constants
+changed, True/False flipped, and each statement in a function body replaced
+by `pass`.
+
+Phase 1 ran this on tests/ndplex_original.py (the notebook's code); that
+mode ended when the suite moved to the package in Phase 2.
 
 Not part of the pytest run (the file name does not start with test_).
 """
@@ -23,13 +33,15 @@ import concurrent.futures as cf
 import json
 import os
 import pathlib
+import shutil
 import subprocess
 import sys
 import tempfile
 import time
 
 HERE = pathlib.Path(__file__).resolve().parent
-DEFAULT_SRC = HERE / "ndplex_original.py"
+PACKAGE = HERE.parent / "src" / "ndplex"
+DEFAULT_SRC = [PACKAGE / "_core.py", PACKAGE / "_oeis.py"]
 
 BINOP_SWAPS = {ast.Add: [ast.Sub], ast.Sub: [ast.Add], ast.Mult: [ast.Div],
                ast.Div: [ast.Mult], ast.Mod: [ast.FloorDiv],
@@ -47,8 +59,10 @@ def _is_docstring(stmt):
 
 
 def _scope_nodes(tree, scope):
+    """Top-level classes and functions named in scope (all if scope is None)."""
     return [n for n in tree.body
-            if isinstance(n, (ast.ClassDef, ast.FunctionDef)) and n.name in scope]
+            if isinstance(n, (ast.ClassDef, ast.FunctionDef))
+            and (scope is None or n.name in scope)]
 
 
 def _sites(tree, scope):
@@ -129,8 +143,16 @@ def mutants(source, scope):
         yield i, desc, ast.unparse(tree)
 
 
-def run_suite(path, timeout):
-    env = dict(os.environ, NDPLEX_IMPL_PATH=str(path), PYTHONDONTWRITEBYTECODE="1")
+def _package_copy(root, filename, source):
+    """A copy of the package under root/ndplex with one file replaced."""
+    dest = pathlib.Path(root) / "ndplex"
+    shutil.copytree(PACKAGE, dest, ignore=shutil.ignore_patterns("__pycache__"))
+    (dest / filename).write_text(source)
+    return pathlib.Path(root)
+
+
+def run_suite(root, timeout):
+    env = dict(os.environ, NDPLEX_IMPL_PATH=str(root), PYTHONDONTWRITEBYTECODE="1")
     cmd = [sys.executable, "-m", "pytest", "-x", "-q", "-p", "no:cacheprovider",
            "--no-header", str(HERE)]
     try:
@@ -147,36 +169,46 @@ def run_suite(path, timeout):
 
 
 def _one(args):
-    i, desc, src, tmpdir, timeout = args
-    path = pathlib.Path(tmpdir) / f"mutant_{i}.py"
-    path.write_text(src)
+    key, filename, desc, src, tmpdir, timeout = args
+    root = _package_copy(pathlib.Path(tmpdir) / key, filename, src)
     t0 = time.time()
-    status, detail = run_suite(path, timeout)
-    return dict(id=i, mutation=desc, status=status, detail=detail,
-                seconds=round(time.time() - t0, 1))
+    status, detail = run_suite(root, timeout)
+    shutil.rmtree(root, ignore_errors=True)
+    return dict(id=key, mutation=f"{filename} {desc}", status=status,
+                detail=detail, seconds=round(time.time() - t0, 1))
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--src", default=str(DEFAULT_SRC))
-    ap.add_argument("--scope", nargs="+", default=["ndplex", "oeis"])
+    ap.add_argument("--src", nargs="+", default=[str(p) for p in DEFAULT_SRC],
+                    help="files of src/ndplex to mutate")
+    ap.add_argument("--scope", nargs="+", default=None,
+                    help="top-level classes/functions to mutate (default: all)")
     ap.add_argument("--jobs", type=int, default=os.cpu_count() or 1)
     ap.add_argument("--timeout", type=float, default=120)
     ap.add_argument("--json")
-    ap.add_argument("--only", type=int, nargs="*", help="mutant ids to run")
+    ap.add_argument("--only", nargs="*", help="mutant ids to run, e.g. _core.py:12")
     args = ap.parse_args()
 
-    source = pathlib.Path(args.src).read_text()
     with tempfile.TemporaryDirectory() as tmp:
-        # The unmutated (re-unparsed) source must pass, or nothing means anything.
-        base = pathlib.Path(tmp) / "baseline.py"
-        base.write_text(ast.unparse(ast.parse(source)))
-        status, detail = run_suite(base, args.timeout)
-        if status != "survived":
-            sys.exit(f"baseline does not pass: {status} {detail}")
-        work = [(i, d, s, tmp, args.timeout) for i, d, s in mutants(source, args.scope)
-                if not args.only or i in args.only]
-        print(f"{len(work)} mutants, scope {args.scope}, {args.jobs} jobs", flush=True)
+        work = []
+        for src in args.src:
+            path = pathlib.Path(src).resolve()
+            if path.parent != PACKAGE.resolve():
+                sys.exit(f"{src} is not a file of {PACKAGE}")
+            source = path.read_text()
+            # The unmutated (re-unparsed) source must pass, or nothing means anything.
+            base = _package_copy(pathlib.Path(tmp) / f"baseline_{path.stem}",
+                                 path.name, ast.unparse(ast.parse(source)))
+            status, detail = run_suite(base, args.timeout)
+            if status != "survived":
+                sys.exit(f"baseline for {path.name} does not pass: {status} {detail}")
+            for i, d, s in mutants(source, args.scope):
+                key = f"{path.name}:{i}"
+                if not args.only or key in args.only:
+                    work.append((key, path.name, d, s, tmp, args.timeout))
+        print(f"{len(work)} mutants, scope {args.scope or 'all'}, {args.jobs} jobs",
+              flush=True)
         results = []
         with cf.ProcessPoolExecutor(args.jobs) as ex:
             for r in ex.map(_one, work):
