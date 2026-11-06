@@ -1,6 +1,6 @@
 # ndplex — Phase 1: Audit
 
-**Status:** audit complete; nothing in the library has been changed. This phase adds a regression suite (`tests/`, 125 passing tests and 12 expected failures), a mutation check for it, `ATTRIBUTION.md`, and this note. Section 7 proposes the 0.1.0 API; section 8 lists the decisions needed before Phase 2.
+**Status:** audit complete; nothing in the library has been changed. This phase adds a regression suite (`tests/`, 126 passing tests and 12 expected failures), a mutation check for it, `ATTRIBUTION.md`, and this note. Section 7 proposes the 0.1.0 API; section 8 lists the decisions needed before Phase 2.
 
 **Source audited:** `ndplex_array.ipynb` at commit `7560854` (2024-04-13). The library is the notebook's first code cell (517 lines), copied verbatim to `tests/ndplex_original.py`. The notebook has 279 cells: 143 code cells (the library plus 142 examples) and 136 markdown cells.
 
@@ -144,7 +144,7 @@ Two fresh-kernel runs with `nbclient`, outputs compared with the saved ones. Tex
 
 Run with `pip install numpy scipy matplotlib seaborn requests pytest` and then `pytest tests`. In Phase 1 the tests run against `tests/ndplex_original.py`; `tests/_impl.py` is the one place to change when they move to the package in Phase 2.
 
-Result: **125 passed, 12 expected failures (xfail), in about 3 s** (*Run*). No test uses the network.
+Result: **126 passed, 12 expected failures (xfail), in about 8 s** (*Run*). No test uses the network.
 
 - **Suite A, `test_pascal_2d.py`** (32 tests): the 9 × 9 rectangle, rows, columns, diagonals, the triangle by `diag` and by `as_tri`, `as_tri(start, end)`, row sums as powers of 2; nodes equal C(i + j, i) for sizes 1–30.
 - **Suite B, `test_3d_4d.py`** (17): the 5 × 5 × 5 tetrahedron array, oblong numbers, the main diagonal, cross-sections, `as_tri` layers as trinomial triangles, layer sums as powers of 3 and 4, 4-D nodes as multinomials, `func=lambda x: 1` giving triangular, tetrahedral and 4-simplex numbers, the 3-D prime-edge diagonal.
@@ -152,7 +152,7 @@ Result: **125 passed, 12 expected failures (xfail), in about 3 s** (*Run*). No t
 - **Suite D, `test_sequences.py`** (18): Fibonacci and Narayana's cows from steep diagonals (to 50 terms), cows at year 20 with and without mortality (1278, 1149), the slope table, the adjacent-ratio examples, the average rental rate ($475.96), and all the primes examples.
 - **Suite E, `test_oeis.py`** (9): with a fake `requests.get`, the request (`http://oeis.org/search`, `q=1,2,3`, `n=1`, `fmt=text`), parsing of the `%N` line, 1-D and 2-D input, `size`, `trim`, and no match.
 - **Suite F, `test_plotting.py`** (10): `plot_ndplex` with each notebook-style call draws the right number of nodes and the highlight lines; `diag_as_hist` with `normed=False`; `normed=True` as an expected failure (F7). Pictures are not compared.
-- **Suite G, `test_known_issues.py`** (22): one test per finding above. Expected failures state the intended fix where it is not in doubt; `test_current_*` tests pin today's behaviour where the fix is a decision.
+- **Suite G, `test_known_issues.py`** (23): one test per finding above. Expected failures state the intended fix where it is not in doubt; `test_current_*` tests pin today's behaviour where the fix is a decision.
 - **`test_original_copy.py`** (1): `tests/ndplex_original.py` is byte-for-byte the notebook cell.
 
 How the expected failures work: each is marked `xfail(strict=True)`. When Phase 2 fixes the bug the test passes, strict mode reports that as a failure, and the marker must come off in the same commit. So no fix lands unrecorded, and no recorded issue is forgotten.
@@ -161,7 +161,21 @@ How the expected failures work: each is marked `xfail(strict=True)`. When Phase 
 
 ## 6. Mutation check
 
-MUTATION_RESULTS
+`tests/mutation_check.py` makes one small change at a time to the class and to `oeis` in `tests/ndplex_original.py`, runs the whole suite against the changed copy, and records whether any test fails. Operators: arithmetic and comparison swaps, integer constants ±1, removed unary minus, `and`/`or` swaps, negated `if`/`while` conditions, changed strings, flipped booleans, and every statement in turn replaced by `pass`. Plotting functions were not mutated (they are only smoke-tested).
+
+Result (*Run*, 6 Nov 2026): **281 mutants; 269 killed, 3 killed by timeout (an endless loop in `diag`'s zero-trimming), 9 survived.**
+
+- **One gap, now closed.** Deleting `np.squeeze` in `diag` survived; it only matters for a 1 × 1 array, where `diag` returns a 0-d array. `test_current_diag_of_single_node_is_0d` now pins this, and the mutant is killed (re-run).
+- **Eight equivalent mutants** (same behaviour on every valid input; argued from the code, not proved by exhaustive test):
+    - Deleting `edge_loc.append(slice(None))`: indexing with one fewer index already selects the whole last axis.
+    - `e[0] * -1` → `e[0] / -1` in `as_tri`: the float result is stored back into an integer array, giving the same values.
+    - `move[0]` → `move[-1]` in the scalar check: a single move has all-scalar entries, a list of moves all-tuple entries.
+    - `fancy_index >= pad_row` → `>`, and `fancy_index < 0` → `< -1`: index `nrows` and index −1 both land on the zero pad row anyway.
+    - Padding `(0, 1)` → `(0, 2)`: more zero padding, same reads.
+    - `min(-1, last_row + 1)` → `min(1, ...)` or `min(0, ...)`: the loop always leaves `last_row + 1 ≤ -1`, so the `min` never binds.
+- `oeis`: all 53 mutants killed.
+
+The harness is reusable: in Phase 2, pointing it at the package (`--src`) checks that the suite still guards the rewritten code.
 
 ---
 

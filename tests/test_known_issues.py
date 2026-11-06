@@ -217,6 +217,14 @@ def test_current_edge_cases():
         ndplex(5, arg_locs=[[-1, 0], [0, 1]])  # positive offset
 
 
+def test_current_diag_of_single_node_is_0d():
+    """diag squeezes its result, so a 1-node ndplex gives a 0-d array, not
+    shape (1,). (Found by the mutation check: removing np.squeeze survived.)"""
+    d = ndplex(1).diag()
+    assert np.ndim(d) == 0 and d == 1
+    assert np.ndim(ndplex(1, edges=3).diag()) == 0
+
+
 def test_default_arg_locs_list_is_not_mutated():
     """F3: the mutable default is reassigned, never mutated, so it is
     harmless as written."""
