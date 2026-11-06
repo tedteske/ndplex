@@ -15,6 +15,8 @@ This repository contains work of three kinds. They are kept apart so that credit
 
 - *Phase 1 audit* (`docs/phase1_audit.md`): running the notebook against current libraries; the findings on import side effects, the ndarray subclass, integer overflow (where it starts, why residues modulo powers of 2 survive it, and that part of the Fibonacci-mod-7 heatmap is overflow), arg_locs that wrap around the array, diag trimming genuine zeros, and oeis hiding network errors; the proposed 0.1.0 API.
 - *Phase 1 regression suite* (`tests/`): the notebook's printed results pinned as tests, the property checks (binomial, multinomial, Lucas's theorem, digital roots), the known-issue tests, the offline OEIS stub and primes sieve, and the mutation check (`tests/mutation_check.py`).
+- *Phase 2 package* (`src/ndplex`, `pyproject.toml`, `docs/phase2_package.md`): the package layout and lazy loading of `oeis`; the fixes for the Phase 1 findings (no import side effects, a single overflow warning naming the first overflowed node, exact `dtype=object` sums, derived arrays that keep working and pickle, zero padding for `arg_locs` outside the array, `diag` ending by geometry rather than at the first trailing zeros, argument checks, and `oeis` over https with failures reported and a `quiet` mode). The class's design, its node-generation loop, the edge-filling rotation, the `diag` move arithmetic and the `as_tri` move pattern are Ted's, kept from the notebook (tier A).
+- *Phase 2 tests*: the suite moved to the package, the known-issue tests rewritten to the fixed behaviour, the new package, overflow, pickling and `oeis` tests, the differential check against the notebook code, and the mutation check adapted to the package.
 
 **C. Third-party work, cited below**
 
@@ -22,12 +24,12 @@ Attribution suggestion, not a rule: the usual convention in published work is th
 
 ### References
 
-**Code adapted in the library cell**
+**Code adapted in the notebook's library cell (not in the package)**
 
 1. `trim_trailing_zeros` (inside `diag`) is adapted from an answer to "Trim trailing zeros of a numpy array along each axis", Stack Overflow question 55917328. https://stackoverflow.com/questions/55917328
 2. The query inside `oeis` is adapted from Andrew Walker's `oeis` package. https://github.com/AndrewWalker/oeis — its `setup.py` declares a BSD license; the repository has no LICENSE file (checked November 2026).
 
-*Stack Overflow contributions are licensed CC BY-SA. Retaining the attribution above satisfies the attribution requirement; the share-alike term is a packaging question, raised in the Phase 1 audit (decision D9).*
+*Both are kept here as history. The package does not contain either (decision D9): `diag` now ends where its moves leave the array (`_trim_outside` in `src/ndplex/_core.py`, written from scratch for the change in behaviour) and `oeis`'s request is written from scratch with the standard library. The notebook (`ndplex_array.ipynb`) still contains the originals.*
 
 **Code and data used only in the notebook's examples**
 
