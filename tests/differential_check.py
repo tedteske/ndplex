@@ -4,8 +4,8 @@ Differential check: the package against the notebook's original code.
 Compares ndplex (installed package) with tests/ndplex_original.py on inputs
 where Phase 2 says nothing should change: construction with edges, func and
 arg_locs that stay inside the array, in 1-4 dimensions; random diag calls
-(one or two moves) on arrays with no genuine zeros; and as_tri for every
-start/end; and a loc that fixes only some axes, with the default move.
+(one to four moves) on 2-D to 5-D arrays with no genuine zeros; as_tri for
+every start/end; and a loc that fixes only some axes, with the default move.
 Calls on which the original raises (all-padding lines, audit
 finding N2) are skipped; those are covered by the regression suite.
 
@@ -14,7 +14,7 @@ finding N2) are skipped; those are covered by the regression suite.
 
 The original needs its own imports (scipy, seaborn, requests, matplotlib),
 so this is not part of the pytest run. Result in Phase 2 (6 Nov 2026):
-all equal, 3527 comparisons.
+all equal, 4822 comparisons.
 """
 import importlib.util
 import itertools
@@ -71,13 +71,14 @@ def main(seed=1):
         n_checks += 1
 
     # 2. diag and as_tri on arrays with no genuine zeros.
-    for d in (2, 3):
-        for n in (1, 2, 4, 6, 9):
+    sizes = {2: (1, 2, 4, 6, 9), 3: (1, 2, 4, 6, 9), 4: (3, 5), 5: (3, 4)}
+    for d, ns in sizes.items():
+        for n in ns:
             p, o = new(n, edges=d), orig.ndplex(n, edges=d)
             combos = [((), ())]
             for _ in range(150):
                 loc = tuple(rng.randint(0, n - 1) for _ in range(d))
-                nm = rng.randint(1, 2)
+                nm = rng.randint(1, min(4, d))
                 move = [tuple(rng.randint(-3, 3) for _ in range(d))
                         for _ in range(nm)]
                 if any(all(v == 0 for v in m) for m in move):

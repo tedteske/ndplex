@@ -5,7 +5,9 @@ Values are the notebook's saved outputs ("First 3D examples", cells 46-63;
 "The Special Case of func=lambda x:1", cells 163-181; "More than 2
 dimensions", cells 270-271), plus multinomial property checks.
 """
+import itertools
 import math
+import random
 
 import numpy as np
 import pytest
@@ -213,3 +215,64 @@ def test_diag_with_partial_loc_returns_sub_arrays():
     # The default move steps along the axes loc fixes (one step each).
     assert_array_equal(p.diag(loc=(1,)), layers)
     assert_array_equal(ndplex(4).diag(loc=(1,)), np.asarray(ndplex(4))[1:])
+
+
+# --- diag in 4-D and 5-D against a brute-force reference (Phase 2 review) --
+
+def _diag_reference(A, loc, moves):
+    """diag from its definition, with plain loops: result[a_(m-1), ..., a_0]
+    is the node (or sub-array) at loc + sum_i a_i * move_i, 0 outside the
+    array; squeezed; each axis ends at its last position inside the array."""
+    A = np.asarray(A)
+    S, k, m = A.shape, len(loc), len(moves)
+    L = max(S)
+    out = np.zeros((L,) * m + S[k:], dtype=object)
+    ins = np.zeros((L,) * m, dtype=bool)
+    for a in itertools.product(range(L), repeat=m):   # a[j] steps move m-1-j
+        p = list(loc)
+        for j, aj in enumerate(a):
+            p = [p[d] + aj * moves[m - 1 - j][d] for d in range(k)]
+        if all(0 <= p[d] < S[d] for d in range(k)):
+            out[a], ins[a] = A[tuple(p)], True
+    ins = np.broadcast_to(ins.reshape(ins.shape + (1,) * (A.ndim - k)), out.shape)
+    out, ins = np.squeeze(out), np.squeeze(ins)
+    ends = []
+    for ax in range(out.ndim):
+        hits = np.flatnonzero(ins.any(axis=tuple(x for x in range(out.ndim) if x != ax)))
+        ends.append(slice(hits[-1] + 1 if hits.size else 0))
+    return out[tuple(ends)]
+
+
+@pytest.mark.parametrize("array", [
+    ndplex(4, edges=4),
+    ndplex(4, edges=4, func=lambda x: x[0] - x[-1]),     # many genuine zeros
+    ndplex(3, edges=5),
+    ndplex(5, edges=4)[1:, :3, 2:, :],                   # non-cubic slice
+    ndplex(3, edges=5)[:, 1:2, :, :2, :],                # a side of length 1
+], ids=["4d", "4d-zeros", "5d", "4d-slice", "5d-thin"])
+def test_diag_matches_reference_in_4d_and_5d(array):
+    """Random locs (full and partial, some outside), 1-4 moves. Checked
+    against the reference above, not against the notebook (which cannot
+    handle slices or genuine zeros)."""
+    rng = random.Random(4)
+    S = array.shape
+    for _ in range(60):
+        k = rng.randint(1, array.ndim)
+        loc = tuple(rng.randint(-1, S[d]) for d in range(k))
+        moves = [tuple(rng.randint(-2, 2) for _ in range(k))
+                 for _ in range(rng.randint(1, min(4, k)))]
+        if any(not any(mv) for mv in moves):
+            continue
+        got = array.diag(loc=loc, move=moves)
+        want = _diag_reference(array, loc, moves)
+        assert got.shape == want.shape and (got == want).all(), (loc, moves)
+
+
+def test_axis_aligned_moves_are_numpy_slices_in_5d():
+    p = ndplex(4, edges=5)
+    a, e = np.asarray(p), np.eye(5, dtype=int)
+    assert_array_equal(p.diag(loc=(0, 2, 0, 0, 0), move=[e[3], e[2], e[0]]),
+                       a[:, 2, :, :, 0])
+    assert_array_equal(p.diag(loc=(1, 0, 3, 0, 2), move=[e[3], e[1]]),
+                       a[1, :, 3, :, 2])
+    assert_array_equal(p.diag(move=[e[4], e[3], e[2], e[1], e[0]]), a)

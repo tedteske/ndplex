@@ -119,7 +119,7 @@ Removed with plotting (2): `test_plot_ndplex_leaves_global_font_alone` (F1) and 
 
 ## 5. The test suite
 
-Run with `pip install -e . pytest` and then `pytest`. Result: **158 passed, 0 xfail, about 1.5 s**, on both environments above, also with `-W error` on NumPy 2.5.4 (*Run*). No test uses the network. matplotlib is optional: the one test that needs it skips without it.
+Run with `pip install -e . pytest` and then `pytest`. Result: **164 passed, 0 xfail, about 2 s**, on both environments above, also with `-W error` on NumPy 2.5.4 (*Run*). No test uses the network. matplotlib is optional: the one test that needs it skips without it.
 
 - `tests/_impl.py` now imports the installed package (as bounded-lognorm's tests do), so a packaging mistake fails the tests. `NDPLEX_IMPL_PATH` points it at another copy of the package (used by the mutation check).
 - Suites A–D (the notebook's results) are unchanged apart from expecting the overflow warning in three tests, and one new test pinning `diag` with a partial `loc`.
@@ -132,7 +132,7 @@ Run with `pip install -e . pytest` and then `pytest`. Result: **158 passed, 0 xf
 
 ## 6. Differential check against the notebook's code
 
-`tests/differential_check.py` compares the package with `tests/ndplex_original.py` where nothing should change: construction in 1–4 dimensions with various edges, funcs, dtypes and in-range arg_locs; up to 150 random `diag` calls (one or two moves, with and without `sum_axis`) on each of 10 arrays without genuine zeros; `as_tri` for every start and end; and every partial `loc` with the default move. Calls where the original raises are skipped. Result (*Numerical*, seed 1): **all equal, 3,527 comparisons.**
+`tests/differential_check.py` compares the package with `tests/ndplex_original.py` where nothing should change: construction in 1–4 dimensions with various edges, funcs, dtypes and in-range arg_locs; up to 150 random `diag` calls (one to four moves, with and without `sum_axis`) on each of 14 arrays from 2-D to 5-D without genuine zeros; `as_tri` for every start and end; and every partial `loc` with the default move. Calls where the original raises are skipped. Result (*Numerical*, seed 1): **all equal, 4,822 comparisons.** It needs the original's imports (scipy, seaborn, requests, matplotlib), so it runs on demand, not in pytest.
 
 ### 6a. Review of `diag` (requested before merge)
 
@@ -144,7 +144,9 @@ The line-building and line-ending logic was checked against the notebook's code,
 - **Line ending.** This is the one intended change (C6): the length along each axis is the last position with any node inside the array. On arrays without genuine zeros this gives the same lengths as the notebook's zero-trimming; the differential check confirms it.
 - **One bug found and fixed.** With a `loc` that fixes only some axes and no `move`, the first draft built a default move for every axis and then raised `ValueError`. The notebook stepped along the axes `loc` fixes (`p.diag(loc=(1,))` gives layers 1, 2, 3). The default is now one step along each axis `loc` fixes, pinned by tests and by the differential check.
 - **Two edge cases decided rather than copied** (§3, C6): a move longer than `loc` raises instead of being silently cut, and a 1-node array with a partial `loc` gives 0-d.
-- **Unchanged forms of input.** `loc` and `move` may be lists, tuples or numpy arrays. A single move may be given as a flat list (notebook cell 230: `move=[-1, 1]`). A zero move repeats the start node once per step, as before. It needs the original's imports (scipy, seaborn, requests, matplotlib), so it runs on demand, not in pytest.
+- **Unchanged forms of input.** `loc` and `move` may be lists, tuples or numpy arrays. A single move may be given as a flat list (notebook cell 230: `move=[-1, 1]`). A zero move repeats the start node once per step, as before.
+- **Higher dimensions** (*Numerical*). `diag` was checked against a brute-force reference written from the definition with plain loops: 1,881 random calls on 4-D and 5-D arrays, including partial `loc`s, `loc`s outside the array, one to four moves, non-cubic slices, a side of length 1, and arrays with many genuine zeros. All agree. Moves along unit axes return exactly numpy's slices (e.g. `p[:, 2, :, :, 0]` of a 5-D array). A smaller version of the reference check is in the suite (`test_diag_matches_reference_in_4d_and_5d`, 5 arrays).
+- **`as_tri` in 4-D and up: right values, sheared layout** (*Numerical*, 3-D to 6-D). Each layer holds every multinomial coefficient of its order exactly once, and the layer sums are d^r. In 2-D and 3-D each layer is a left-justified triangle. From 4-D up it is not: in 4-D, layer r occupies the positions (a, b, c) with a ≤ b and b + c ≤ r, instead of a + b + c ≤ r. The cause is the move pattern, unchanged from the notebook. The first two moves take a step from the layer's pivot axis (axis d − 2), but from the third move on each takes it from the next axis instead; in 4-D the third move is (1, −1, 0, 0) rather than (1, 0, −1, 0). Every node still appears once, because the map between the two layouts is one-to-one. This was not introduced in Phase 2. The notebook uses 4-D `as_tri` only with `sums=True`, which is unaffected. **Decision pending (Ted):** keep the notebook's layout and document it, or switch to left-justified layers. The switch changes no 2-D or 3-D result and no sums, but 4-D and higher layers would be arranged differently (*Run*: the alternative moves give left-justified 4-D and 5-D layers with the same values).
 
 ---
 
