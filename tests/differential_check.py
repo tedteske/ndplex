@@ -5,7 +5,8 @@ Compares ndplex (installed package) with tests/ndplex_original.py on inputs
 where Phase 2 says nothing should change: construction with edges, func and
 arg_locs that stay inside the array, in 1-4 dimensions; random diag calls
 (one or two moves) on arrays with no genuine zeros; and as_tri for every
-start/end. Calls on which the original raises (all-padding lines, audit
+start/end; and a loc that fixes only some axes, with the default move.
+Calls on which the original raises (all-padding lines, audit
 finding N2) are skipped; those are covered by the regression suite.
 
     pip install -e . scipy seaborn requests matplotlib
@@ -13,7 +14,7 @@ finding N2) are skipped; those are covered by the regression suite.
 
 The original needs its own imports (scipy, seaborn, requests, matplotlib),
 so this is not part of the pytest run. Result in Phase 2 (6 Nov 2026):
-all equal, 3348 comparisons.
+all equal, 3527 comparisons.
 """
 import importlib.util
 import itertools
@@ -91,6 +92,13 @@ def main(seed=1):
                     got = p.diag(loc=loc, move=move, sum_axis=sum_axis)
                     assert same(want, got), (n, d, loc, move, sum_axis)
                     n_checks += 1
+            # A loc that fixes only some axes (sub-arrays), default move.
+            # (Not for n = 1: there the notebook's result kept a squeezed
+            # padding axis; the package gives 0-d, as for a full loc.)
+            for loc in [] if n == 1 else [(i,) for i in range(n)] + (
+                    [(i, j) for i in range(n) for j in range(n)] if d == 3 else []):
+                assert same(o.diag(loc=loc), p.diag(loc=loc)), (n, d, loc)
+                n_checks += 1
             if n > 1:
                 for s, e in itertools.combinations_with_replacement(range(n), 2):
                     for sums in (False, True):

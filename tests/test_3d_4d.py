@@ -210,3 +210,6 @@ def test_diag_with_partial_loc_returns_sub_arrays():
     assert_array_equal(layers, np.asarray(p)[1:])
     lines = p.diag(loc=(0, 1), move=(1, 0))
     assert_array_equal(lines, np.asarray(p)[:, 1])
+    # The default move steps along the axes loc fixes (one step each).
+    assert_array_equal(p.diag(loc=(1,)), layers)
+    assert_array_equal(ndplex(4).diag(loc=(1,)), np.asarray(ndplex(4))[1:])

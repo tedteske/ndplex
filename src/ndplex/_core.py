@@ -229,11 +229,11 @@ class ndplex(np.ndarray):
         a = np.asarray(self)
         if len(loc) == 0:
             loc = (0,) * a.ndim
+        k = len(loc)
         if len(move) == 0:
-            move = (1,) * a.ndim
+            move = (1,) * k
         if np.isscalar(move[0]):
             move = [move]
-        k = len(loc)
         if k > a.ndim:
             raise ValueError(f"loc has {k} coordinates; the array has "
                              f"{a.ndim} dimensions")
@@ -277,7 +277,8 @@ class ndplex(np.ndarray):
             Starting coordinates. Default: the origin.
         move : tuple of ints, or list of such tuples
             Step(s), each with as many coordinates as loc. Default: one step
-            along every axis (the main diagonal).
+            along every axis that loc fixes (with the default loc, the main
+            diagonal).
         sum_axis : None or int
             If given, sum the result over this axis.
 

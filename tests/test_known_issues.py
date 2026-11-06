@@ -400,6 +400,11 @@ def test_edge_cases():
     with raises(ValueError, "each move needs 2 coordinates (as many as loc), "
                             "got (1, 1, 1)"):
         ndplex(4).diag(loc=(0, 0), move=(1, 1, 1))
+    # The notebook ignored a move's coordinates beyond len(loc); now they
+    # raise (migration: drop the extra coordinates).
+    with raises(ValueError, "each move needs 1 coordinates (as many as loc), "
+                            "got (1, 1)"):
+        ndplex(4).diag(loc=(1,), move=(1, 1))
     with raises(ValueError, "loc has 3 coordinates; the array has 2 dimensions"):
         ndplex(4).diag(loc=(0, 0, 0), move=(1, 1, 1))
     # numpy integers are fine everywhere an int is expected

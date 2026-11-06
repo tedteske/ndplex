@@ -72,8 +72,10 @@ Every value the notebook computes is unchanged: Suites A–D (the notebook's pri
 
 **C6. `diag` ends where the moves leave the array** (N2; decisions D6, D9).
 - The result's length along each axis is set by the last position inside the array, not by where the zeros start. Genuine trailing zeros are kept; an all-zero line returns zeros; a line starting outside the array returns an empty array. Positions outside the array before the end still read 0, as before. `as_tri` builds on the same rule, so arrays with genuine zeros (such as `edges=(c, -c)`) now give a triangle instead of `IndexError`.
-- A `loc` with fewer coordinates than dimensions still selects whole sub-arrays (layers or lines), as the docstring's "node or 1D array" says; pinned by a new test.
-- *Migration:* results change only where a diagonal ends in genuine zeros, e.g. row 1 of `ndplex(8, func=lambda x: x[0] - x[1])` now has 8 values, not 7. None of the notebook's examples do.
+- A `loc` with fewer coordinates than dimensions still selects whole sub-arrays (layers or lines), as the docstring's "node or 1D array" says, and the default move still steps one along each axis `loc` fixes; pinned by new tests.
+- A move with more coordinates than `loc` now raises `ValueError`; the notebook silently ignored the extra coordinates.
+- For a 1-node array, a partial `loc` now gives a 0-d result, as a full `loc` already did; the notebook gave shape (1,) or (1, 1), because its zero padding was squeezed together with the data.
+- *Migration:* results change only where a diagonal ends in genuine zeros, e.g. row 1 of `ndplex(8, func=lambda x: x[0] - x[1])` now has 8 values, not 7. None of the notebook's examples do. Drop any extra move coordinates.
 
 **C7. Argument handling** (N4, N6, F3).
 - `edges` accepts any integer type (`np.int64(3)`). `nrows < 1`, `edges < 1`, `edges=()`, an edge of the wrong length, an `arg_loc` of the wrong length, and `diag` locations or moves of the wrong length raise `ValueError` with a message.
@@ -130,7 +132,19 @@ Run with `pip install -e . pytest` and then `pytest`. Result: **158 passed, 0 xf
 
 ## 6. Differential check against the notebook's code
 
-`tests/differential_check.py` compares the package with `tests/ndplex_original.py` where nothing should change: construction in 1–4 dimensions with various edges, funcs, dtypes and in-range arg_locs; up to 150 random `diag` calls (one or two moves, with and without `sum_axis`) on each of 10 arrays without genuine zeros; and `as_tri` for every start and end. Calls where the original raises are skipped. Result (*Numerical*, seed 1): **all equal, 3,348 comparisons.** It needs the original's imports (scipy, seaborn, requests, matplotlib), so it runs on demand, not in pytest.
+`tests/differential_check.py` compares the package with `tests/ndplex_original.py` where nothing should change: construction in 1–4 dimensions with various edges, funcs, dtypes and in-range arg_locs; up to 150 random `diag` calls (one or two moves, with and without `sum_axis`) on each of 10 arrays without genuine zeros; `as_tri` for every start and end; and every partial `loc` with the default move. Calls where the original raises are skipped. Result (*Numerical*, seed 1): **all equal, 3,527 comparisons.**
+
+### 6a. Review of `diag` (requested before merge)
+
+The line-building and line-ending logic was checked against the notebook's code, case by case (*Run*, both implementations side by side) and by reading:
+
+- **Axis order with several moves.** Axis 0 steps the last move and the last axis the first move, so with two moves `result[a, b]` is the node at `loc + a * move[1] + b * move[0]`. This is unchanged from the notebook, and is what the Fibonacci and Narayana examples rely on (`move=[(-2, 1), (1, 0)]`, `sum_axis=1` sums each steep diagonal).
+- **Number of steps.** Each move takes as many steps as the array's longest side, as in the notebook (`nrows`). Only a degenerate pair of moves, such as opposite moves, could stay inside longer than that; those are capped the same way as before.
+- **Outside positions.** Positions with any coordinate below 0 or past the side read 0. A negative `loc` is outside, not counted from the end, as in the notebook. Only trailing outside positions are dropped. Positions outside the array before the last inside one stay as zeros: a line that starts outside and enters keeps its leading zeros, and a 2-move cross-section is cut to its bounding box. `as_tri` relies on this.
+- **Line ending.** This is the one intended change (C6): the length along each axis is the last position with any node inside the array. On arrays without genuine zeros this gives the same lengths as the notebook's zero-trimming; the differential check confirms it.
+- **One bug found and fixed.** With a `loc` that fixes only some axes and no `move`, the first draft built a default move for every axis and then raised `ValueError`. The notebook stepped along the axes `loc` fixes (`p.diag(loc=(1,))` gives layers 1, 2, 3). The default is now one step along each axis `loc` fixes, pinned by tests and by the differential check.
+- **Two edge cases decided rather than copied** (§3, C6): a move longer than `loc` raises instead of being silently cut, and a 1-node array with a partial `loc` gives 0-d.
+- **Unchanged forms of input.** `loc` and `move` may be lists, tuples or numpy arrays. A single move may be given as a flat list (notebook cell 230: `move=[-1, 1]`). A zero move repeats the start node once per step, as before. It needs the original's imports (scipy, seaborn, requests, matplotlib), so it runs on demand, not in pytest.
 
 ---
 
