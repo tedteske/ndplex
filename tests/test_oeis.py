@@ -179,5 +179,30 @@ def test_quiet_raises(monkeypatch):
 
 
 def test_rejects_3d_input(fake):
-    with pytest.raises(ValueError, match="1-D or 2-D"):
+    with pytest.raises(ValueError, match="1-D or 2-D array, not 3-D$"):
         oeis(ndplex(3, edges=3))
+
+
+def test_network_call_decodes_utf8(monkeypatch):
+    """The one function that touches the network, with urllib's urlopen
+    replaced: it passes the URL and timeout on and decodes the answer as
+    UTF-8, replacing undecodable bytes instead of failing."""
+    seen = {}
+
+    class Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+        def read(self):
+            return "café ".encode("utf-8") + b"\xff"
+
+    def fake_urlopen(url, timeout):
+        seen.update(url=url, timeout=timeout)
+        return Response()
+
+    monkeypatch.setattr(oeis_module.urllib.request, "urlopen", fake_urlopen)
+    assert oeis_module.urlopen("https://oeis.org/x", 3) == "café \ufffd"
+    assert seen == {"url": "https://oeis.org/x", "timeout": 3}

@@ -14,13 +14,10 @@ import numpy as np
 
 __all__ = ["ndplex"]
 
-
-def _zeros(shape, dtype):
-    """Zeros of `dtype`. For dtype=object the zeros are Python ints, so sums
-    stay exact (np.pad would insert numpy int64 zeros, audit finding N12)."""
-    if np.dtype(dtype) == object:
-        return np.full(shape, 0, dtype=object)
-    return np.zeros(shape, dtype=dtype)
+# Padding and fill values below are created with np.zeros or assigned as the
+# Python int 0. For dtype=object both give Python int zeros, so sums of
+# object arrays stay exact (the notebook padded with np.pad, which inserts
+# numpy int64 zeros: audit finding N12).
 
 
 def _trim_outside(values, inside):
@@ -103,7 +100,6 @@ class ndplex(np.ndarray):
 
     def __new__(cls, nrows, edges=(1, 1), arg_locs=None, func=sum,
                 dtype=np.int64):
-        nrows = operator.index(nrows)
         if nrows < 1:
             raise ValueError(f"nrows must be at least 1, got {nrows}")
 
@@ -122,8 +118,6 @@ class ndplex(np.ndarray):
                     f"nrows={nrows}; got shape {shape_e}")
 
         base = np.zeros((nrows,) * ndim, dtype=dtype)
-        if base.dtype == object:
-            base = _zeros(base.shape, object)
 
         # Populate the front edges: rotate the axes so that each edge in turn
         # lies along the last axis, and fill it. After ndim rotations the
@@ -140,10 +134,10 @@ class ndplex(np.ndarray):
         else:
             offsets = []
             for loc in arg_locs:
-                loc = tuple(loc)
                 if len(loc) != ndim:
                     raise ValueError(
-                        f"each arg_loc needs {ndim} coordinates, got {loc}")
+                        f"each arg_loc needs {ndim} coordinates, got "
+                        f"{tuple(loc)}")
                 offset = []
                 for v in loc:
                     if v is not None:
@@ -151,11 +145,11 @@ class ndplex(np.ndarray):
                         if v > 0:
                             raise ValueError(
                                 f"arg_locs offsets must be <= 0 (or None), "
-                                f"got {loc}")
+                                f"got {tuple(loc)}")
                     offset.append(v)
                 offsets.append(tuple(offset))
 
-        zero = 0 if base.dtype == object else base.dtype.type(0)
+        zero = base.dtype.type(0)  # for dtype=object, the Python int 0
         first_overflow = None
         with np.errstate(over="raise"):
             for node in it.product(range(nrows), repeat=ndim):
@@ -265,10 +259,7 @@ class ndplex(np.ndarray):
         rest = (1,) * (values.ndim - inside.ndim)
         inside = np.broadcast_to(inside.reshape(inside.shape + rest),
                                  values.shape)
-        if values.dtype == object:
-            values[~inside] = 0
-        else:
-            values[~inside] = values.dtype.type(0)
+        values[~inside] = 0
         return values, inside
 
     def diag(self, loc=(), move=(), sum_axis=None):
@@ -359,7 +350,7 @@ class ndplex(np.ndarray):
             loc[-2] = i
             values, inside = self._line(tuple(loc), moves)
             section = _trim_outside(values, inside)
-            row = _zeros(width, a.dtype)
+            row = np.zeros(width, dtype=a.dtype)
             row[tuple(slice(s) for s in section.shape)] = section
             rows.append(row)
 

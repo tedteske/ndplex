@@ -14,6 +14,7 @@ pin behaviour that did not change.
 import copy
 import math
 import pickle
+import re
 import subprocess
 import sys
 import warnings
@@ -101,6 +102,7 @@ def test_copies_and_slices_keep_the_record():
     p = ndplex(5, edges=([1, 2, 3, 4, 5], 1))
     for q in (p.copy(), copy.deepcopy(p), p.view(), p[1:], p.T, p + 1):
         assert q.edges is p.edges and q.func is sum
+        assert_array_equal(q.arg_locs, [[-1, 0], [0, -1]])
     assert p.nrows == 5 and p[1:3, 1:3].nrows == 2
     assert p[1:].nrows is None and p[1].nrows == 5
     assert np.zeros((3, 3)).view(ndplex).edges is None
@@ -151,8 +153,13 @@ def test_int64_overflow_wraps_after_66_and_warns_once():
     i, j = np.nonzero(wrong)
     assert (i + j).min() == 67  # every node with i + j <= 66 is exact
     first = _first_wrong_in_generation_order(got, exact)
-    assert f"from node {first} on" in str(w[0].message)
-    assert "dtype=object" in str(w[0].message)
+    assert str(w[0].message) == (
+        f"ndplex: node values overflowed int64 from node {first} on (in "
+        "generation order); that node and those computed from it are wrong. "
+        "Use dtype=object for exact integers, or reduce inside func (e.g. a "
+        "modulus).")
+    # The warning points at the caller's line, as numpy's own warnings do.
+    assert w[0].filename == __file__
     # wrapping is modulo 2**64, so residues mod powers of 2 survive ...
     assert ((got % 8) == (exact % 8)).all()
     # ... and others do not (the notebook's "divisor 5" heatmap)
@@ -298,6 +305,35 @@ def test_as_tri_with_genuine_zeros_inside():
     assert_array_equal(tri[2], [2, 0, -2, 0, 0])
 
 
+def test_diag_on_thin_slices():
+    """Positions outside a side of length 1 read as 0 (they are not looked
+    up in the array)."""
+    p = ndplex(5)
+    assert_array_equal(p[:1].diag(), [1])
+    assert_array_equal(p[:, :1].diag(), [1])
+    assert_array_equal(p[2:3].diag(move=(0, 1)), [1, 3, 6, 10, 15])
+
+
+def test_diag_through_a_slice_with_a_side_of_one():
+    """Squeezing a length-1 axis must not confuse where the line ends: the
+    layers stepped through start at 1, so only three lie inside. (Found by
+    the Phase 2 mutation check.)"""
+    p = ndplex(4, edges=3)[:, :1, :]
+    got = p.diag(loc=(1,), move=(1,))
+    assert got.shape == (3, 4)
+    assert_array_equal(got, np.asarray(p)[1:, 0, :])
+
+
+def test_object_dtype_triangle_matches_int64():
+    """The padding in as_tri is Python int 0 for dtype=object."""
+    tri = ndplex(6, dtype=object).as_tri()
+    assert tri.dtype == object
+    assert_array_equal(tri.astype(np.int64), ndplex(6).as_tri())
+    assert all(type(v) is int for v in tri.ravel())
+    d = ndplex(6, dtype=object).diag(loc=(4, 0), move=(-1, 2))
+    assert d.tolist() == [1, 10, 15] and all(type(v) is int for v in d)
+
+
 def test_diag_that_starts_outside_the_array_is_empty():
     assert ndplex(4).diag(loc=(5, 5)).shape == (0,)
 
@@ -332,28 +368,43 @@ def test_edge_cases():
     Migration: code catching IndexError for these must catch ValueError."""
     assert_array_equal(ndplex(1), [[1]])
     assert_array_equal(ndplex(4, edges=1), [1, 1, 1, 1])  # 1-D: just the edge
-    with pytest.raises(ValueError, match="nrows"):
+    def raises(exc, message):
+        return pytest.raises(exc, match="^" + re.escape(message) + "$")
+
+    with raises(ValueError, "nrows must be at least 1, got 0"):
         ndplex(0)
-    with pytest.raises(ValueError, match="edges"):
+    with raises(ValueError, "edges must be at least 1, got 0"):
         ndplex(4, edges=0)
-    with pytest.raises(ValueError, match="edge 0"):
+    with raises(ValueError, "edges must not be empty"):
+        ndplex(4, edges=())
+    with raises(ValueError, "edge 0 must be a number or a 1-D sequence of "
+                            "length nrows=4; got shape (3,)"):
         ndplex(4, edges=([1, 2, 3], 1))  # edge of the wrong length
-    with pytest.raises(ValueError, match="edge 1"):
+    with raises(ValueError, "edge 1 must be a number or a 1-D sequence of "
+                            "length nrows=4; got shape (2, 2)"):
         ndplex(4, edges=(1, [[1, 2], [3, 4]]))
-    with pytest.raises(ValueError, match="<= 0"):
+    with raises(ValueError, "arg_locs offsets must be <= 0 (or None), "
+                            "got (0, 1)"):
         ndplex(5, arg_locs=[[-1, 0], [0, 1]])  # positive offset
-    with pytest.raises(ValueError, match="<= 0"):
-        ndplex(5, arg_locs=[[-1, 0], [1, -1]])  # positive offset, not past the edge
-    with pytest.raises(ValueError, match="2 coordinates"):
+    with raises(ValueError, "arg_locs offsets must be <= 0 (or None), "
+                            "got (1, -1)"):
+        ndplex(5, arg_locs=[[-1, 0], [1, -1]])  # positive, not past the edge
+    with raises(ValueError, "each arg_loc needs 2 coordinates, got (-1, 0, 0)"):
         ndplex(5, arg_locs=[[-1, 0, 0]])
-    with pytest.raises(ValueError, match="2 dimensions"):
+    with pytest.raises(TypeError):
+        ndplex(5, arg_locs=[[-1.0, 0], [0, -1]])  # offsets must be integers
+    with raises(ValueError, "as_tri needs an array of at least 2 dimensions"):
         ndplex(4, edges=1).as_tri()
-    with pytest.raises(ValueError, match="equal sides"):
+    with raises(ValueError, "as_tri needs equal sides; the shape is (3, 4)"):
         ndplex(4)[1:].as_tri()
-    with pytest.raises(ValueError, match="move"):
+    with raises(ValueError, "each move needs 2 coordinates (as many as loc), "
+                            "got (1, 1, 1)"):
         ndplex(4).diag(loc=(0, 0), move=(1, 1, 1))
-    with pytest.raises(ValueError, match="loc"):
-        ndplex(4).diag(loc=(0, 0, 0))
+    with raises(ValueError, "loc has 3 coordinates; the array has 2 dimensions"):
+        ndplex(4).diag(loc=(0, 0, 0), move=(1, 1, 1))
+    # numpy integers are fine everywhere an int is expected
+    assert_array_equal(ndplex(np.int64(3), arg_locs=np.array([[-1, 0], [0, -1]])),
+                       ndplex(3))
 
 
 def test_default_dtype_is_int64():
