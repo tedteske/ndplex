@@ -5,7 +5,10 @@ Compares ndplex (installed package) with tests/ndplex_original.py on inputs
 where Phase 2 says nothing should change: construction with edges, func and
 arg_locs that stay inside the array, in 1-4 dimensions; random diag calls
 (one to four moves) on 2-D to 5-D arrays with no genuine zeros; as_tri for
-every start/end; and a loc that fixes only some axes, with the default move.
+every start/end (identical in 2-D and 3-D; from 4-D up the same sums and the
+same values per layer, since the package's layers are left-justified there
+and the notebook's were sheared); and a loc that fixes only some axes, with
+the default move.
 Calls on which the original raises (all-padding lines, audit
 finding N2) are skipped; those are covered by the regression suite.
 
@@ -101,10 +104,19 @@ def main(seed=1):
                 assert same(o.diag(loc=loc), p.diag(loc=loc)), (n, d, loc)
                 n_checks += 1
             if n > 1:
+                # From 4-D up the package's as_tri layers are left-justified
+                # (decision (b)); the notebook's were sheared. Values and
+                # sums are the same, so compare the layouts in 2-D and 3-D,
+                # and the sums and sorted values in every dimension.
                 for s, e in itertools.combinations_with_replacement(range(n), 2):
-                    for sums in (False, True):
-                        assert same(o.as_tri(s, e, sums), p.as_tri(s, e, sums))
-                        n_checks += 1
+                    assert same(o.as_tri(s, e, True), p.as_tri(s, e, True))
+                    n_checks += 1
+                    if d <= 3:
+                        assert same(o.as_tri(s, e), p.as_tri(s, e))
+                    else:
+                        for lo, ln in zip(o.as_tri(s, e), p.as_tri(s, e)):
+                            assert same(np.sort(lo, axis=None), np.sort(ln, axis=None))
+                    n_checks += 1
     print(f"all equal; {n_checks} comparisons")
 
 

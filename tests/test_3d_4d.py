@@ -276,3 +276,34 @@ def test_axis_aligned_moves_are_numpy_slices_in_5d():
     assert_array_equal(p.diag(loc=(1, 0, 3, 0, 2), move=[e[3], e[1]]),
                        a[1, :, 3, :, 2])
     assert_array_equal(p.diag(move=[e[4], e[3], e[2], e[1], e[0]]), a)
+
+
+@pytest.mark.parametrize("d, n", [(2, 6), (3, 6), (4, 5), (5, 4), (6, 4)])
+def test_as_tri_layers_are_left_justified(d, n):
+    """Phase 2, decision (b): tri[k][x_1, ..., x_(d-1)] is the node with
+    those coordinates on the axes other than axis d-2, in order, and
+    k - sum(x) on axis d-2; positions with sum(x) > k are padding (0).
+    Unequal edges make the array asymmetric, so a swapped axis would show.
+    The notebook's layout matched this in 2-D and 3-D only; from 4-D up it
+    was sheared (docs/phase2_package.md, C11).
+    Migration: index 4-D and higher layers as described above; values and
+    sums are unchanged."""
+    p = ndplex(n, edges=tuple(range(1, d + 1)), dtype=object)
+    a = np.asarray(p)
+    tri = p.as_tri()
+    for k in range(n):
+        for x in itertools.product(range(n), repeat=d - 1):
+            s = sum(x)
+            if s <= k:
+                node = x[:d - 2] + (k - s,) + x[d - 2:]
+                assert tri[k][x] == a[node], (k, x)
+            else:
+                assert tri[k][x] == 0, (k, x)
+
+
+def test_as_tri_4d_example():
+    """Layer 3 of the default 4-D array, slice a = 1: C(3, 1) = 3 times
+    layer 2 of the 3-D array (the trinomial triangle 1 2 1 / 2 2 / 1),
+    justified left."""
+    assert_array_equal(ndplex(4, edges=4).as_tri()[3][1],
+                       [[3, 6, 3, 0], [6, 6, 0, 0], [3, 0, 0, 0], [0, 0, 0, 0]])

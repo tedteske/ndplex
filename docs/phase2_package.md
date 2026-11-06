@@ -93,7 +93,13 @@ Every value the notebook computes is unchanged: Suites A–D (the notebook's pri
 
 **C9. Plotting.** Left out of the package (D8). The fixes listed in the audit for `plot_ndplex` and `diag_as_hist` (the `legend_handles` rename, no global font change, colour cycling, drawing negative values) move to the Phase 5 helper cell.
 
-**C10. Docstrings.** The class docstring states the edge orientation (edge k lies along axis k; in 2-D `edges[0]` fills column 0, `edges[1]` row 0, and the last edge wins at the origin), the zero-padding rule for `arg_locs`, and the overflow limits (default 2-D exact for i + j ≤ 66, 3-D for i + j + k ≤ 43). `as_tri` says it returns rather than prints, and that a genuine zero in a cross-section looks like padding.
+**C10. Docstrings.** The class docstring states the edge orientation (edge k lies along axis k; in 2-D `edges[0]` fills column 0, `edges[1]` row 0, and the last edge wins at the origin), the zero-padding rule for `arg_locs`, and the overflow limits (default 2-D exact for i + j ≤ 66, 3-D for i + j + k ≤ 43). `as_tri` says it returns rather than prints, how its layers are indexed (C11), and that a genuine zero in a cross-section looks like padding.
+
+**C11. `as_tri` layers are left-justified in every dimension** (found in review; Ted chose option (b) on 6 Nov 2026).
+- From 4-D up the notebook's layers were sheared: in 4-D, layer r filled the positions (a, b, c) with a ≤ b and b + c ≤ r. They are now left-justified like the 2-D triangle and the 3-D tetrahedron layers: element `[k][x_1, ..., x_(d-1)]` is the node with those coordinates on the axes other than the pivot axis d − 2, in order, and k − Σx on the pivot axis. In 4-D, `tri[k][a, b, c]` is the node `(a, b, k − a − b − c, c)`.
+- How: each move takes one step from the pivot axis to another axis. The 2-D and 3-D moves are the notebook's exactly; in 4-D the third move is (1, 0, −1, 0) instead of (1, −1, 0, 0).
+- Tested in 2-D to 6-D, node by node, on arrays with unequal edges, so a swapped axis would show (`test_as_tri_layers_are_left_justified`).
+- *Migration:* none in 2-D and 3-D, and none for `as_tri(sums=True)` in any dimension. Index 4-D and higher layers as described above. The notebook uses 4-D `as_tri` only with `sums=True` (cell 181), so no notebook output changes.
 
 ---
 
@@ -119,7 +125,7 @@ Removed with plotting (2): `test_plot_ndplex_leaves_global_font_alone` (F1) and 
 
 ## 5. The test suite
 
-Run with `pip install -e . pytest` and then `pytest`. Result: **164 passed, 0 xfail, about 2 s**, on both environments above, also with `-W error` on NumPy 2.5.4 (*Run*). No test uses the network. matplotlib is optional: the one test that needs it skips without it.
+Run with `pip install -e . pytest` and then `pytest`. Result: **170 passed, 0 xfail, about 1.5 s**, on both environments above, also with `-W error` on NumPy 2.5.4 (*Run*). No test uses the network. matplotlib is optional: the one test that needs it skips without it.
 
 - `tests/_impl.py` now imports the installed package (as bounded-lognorm's tests do), so a packaging mistake fails the tests. `NDPLEX_IMPL_PATH` points it at another copy of the package (used by the mutation check).
 - Suites A–D (the notebook's results) are unchanged apart from expecting the overflow warning in three tests, and one new test pinning `diag` with a partial `loc`.
@@ -132,7 +138,7 @@ Run with `pip install -e . pytest` and then `pytest`. Result: **164 passed, 0 xf
 
 ## 6. Differential check against the notebook's code
 
-`tests/differential_check.py` compares the package with `tests/ndplex_original.py` where nothing should change: construction in 1–4 dimensions with various edges, funcs, dtypes and in-range arg_locs; up to 150 random `diag` calls (one to four moves, with and without `sum_axis`) on each of 14 arrays from 2-D to 5-D without genuine zeros; `as_tri` for every start and end; and every partial `loc` with the default move. Calls where the original raises are skipped. Result (*Numerical*, seed 1): **all equal, 4,822 comparisons.** It needs the original's imports (scipy, seaborn, requests, matplotlib), so it runs on demand, not in pytest.
+`tests/differential_check.py` compares the package with `tests/ndplex_original.py` where nothing should change: construction in 1–4 dimensions with various edges, funcs, dtypes and in-range arg_locs; up to 150 random `diag` calls (one to four moves, with and without `sum_axis`) on each of 14 arrays from 2-D to 5-D without genuine zeros; `as_tri` for every start and end (identical in 2-D and 3-D; from 4-D up, where C11 changes the layout, the same sums and the same values in every layer); and every partial `loc` with the default move. Calls where the original raises are skipped. Result (*Numerical*, seed 1): **all equal, 4,822 comparisons.** It needs the original's imports (scipy, seaborn, requests, matplotlib), so it runs on demand, not in pytest.
 
 ### 6a. Review of `diag` (requested before merge)
 
@@ -146,7 +152,7 @@ The line-building and line-ending logic was checked against the notebook's code,
 - **Two edge cases decided rather than copied** (§3, C6): a move longer than `loc` raises instead of being silently cut, and a 1-node array with a partial `loc` gives 0-d.
 - **Unchanged forms of input.** `loc` and `move` may be lists, tuples or numpy arrays. A single move may be given as a flat list (notebook cell 230: `move=[-1, 1]`). A zero move repeats the start node once per step, as before.
 - **Higher dimensions** (*Numerical*). `diag` was checked against a brute-force reference written from the definition with plain loops: 1,881 random calls on 4-D and 5-D arrays, including partial `loc`s, `loc`s outside the array, one to four moves, non-cubic slices, a side of length 1, and arrays with many genuine zeros. All agree. Moves along unit axes return exactly numpy's slices (e.g. `p[:, 2, :, :, 0]` of a 5-D array). A smaller version of the reference check is in the suite (`test_diag_matches_reference_in_4d_and_5d`, 5 arrays).
-- **`as_tri` in 4-D and up: right values, sheared layout** (*Numerical*, 3-D to 6-D). Each layer holds every multinomial coefficient of its order exactly once, and the layer sums are d^r. In 2-D and 3-D each layer is a left-justified triangle. From 4-D up it is not: in 4-D, layer r occupies the positions (a, b, c) with a ≤ b and b + c ≤ r, instead of a + b + c ≤ r. The cause is the move pattern, unchanged from the notebook. The first two moves take a step from the layer's pivot axis (axis d − 2), but from the third move on each takes it from the next axis instead; in 4-D the third move is (1, −1, 0, 0) rather than (1, 0, −1, 0). Every node still appears once, because the map between the two layouts is one-to-one. This was not introduced in Phase 2. The notebook uses 4-D `as_tri` only with `sums=True`, which is unaffected. **Decision pending (Ted):** keep the notebook's layout and document it, or switch to left-justified layers. The switch changes no 2-D or 3-D result and no sums, but 4-D and higher layers would be arranged differently (*Run*: the alternative moves give left-justified 4-D and 5-D layers with the same values).
+- **`as_tri` in 4-D and up: right values, sheared layout** (*Numerical*, 3-D to 6-D). Each layer holds every multinomial coefficient of its order exactly once, and the layer sums are d^r. In 2-D and 3-D each layer is a left-justified triangle. From 4-D up it is not: in 4-D, layer r occupies the positions (a, b, c) with a ≤ b and b + c ≤ r, instead of a + b + c ≤ r. The cause is the move pattern, unchanged from the notebook. The first two moves take a step from the layer's pivot axis (axis d − 2), but from the third move on each takes it from the next axis instead; in 4-D the third move is (1, −1, 0, 0) rather than (1, 0, −1, 0). Every node still appears once, because the map between the two layouts is one-to-one. This was not introduced in Phase 2. The notebook uses 4-D `as_tri` only with `sums=True`, which is unaffected. **Decided (Ted, option (b)):** layers are now left-justified in every dimension; see C11.
 
 ---
 
@@ -154,19 +160,18 @@ The line-building and line-ending logic was checked against the notebook's code,
 
 `tests/mutation_check.py` now mutates `src/ndplex/_core.py` and `src/ndplex/_oeis.py` (every top-level class and function), runs the suite against a copy of the package containing the change, and records whether a test fails. The operators are those of Phase 1, plus `&`.
 
-Result (*Run*, 6 Nov 2026): **459 mutants (375 in `_core.py`, 84 in `_oeis.py`); 448 killed, 11 survived, all 11 equivalent.** The first run found gaps, closed in this phase:
+Result (*Run*, 6 Nov 2026, after the review changes): **450 mutants (366 in `_core.py`, 84 in `_oeis.py`); 440 killed, 10 survived, all 10 equivalent.** (Before the `as_tri` change in C11: 459 mutants, 448 killed, 11 equivalent; the eleventh was in the old move construction, which is gone.) The first run found gaps, closed in this phase:
 
 - Redundant code (*Argued* equivalent, then removed): a separate zero-padding helper for object arrays (`np.zeros(..., dtype=object)` already gives Python int zeros, on NumPy 1.23.5 and 2.5.4, *Run*), a dtype branch for the fill value, an `operator.index` on `nrows`, and a `tuple()` conversion.
 - Untested checks, now tested: `edges=()`, the exact text of every argument error, the overflow warning's full text and the line it points to (`stacklevel`), `arg_locs` carried through copies, non-integer `arg_locs` offsets, object-dtype triangles (whose padding was not checked), `diag` on slices with a side of length 1, and the network function in `_oeis.py`, with undecodable bytes.
 - One real gap in the line-ending rule: deleting the squeeze of the inside/outside mask survived. It matters only when a sub-array line passes through a side of length 1; `test_diag_through_a_slice_with_a_side_of_one` now kills it (re-run).
 
-The 11 equivalent mutants (*Argued*: same behaviour on every valid input):
+The 10 equivalent mutants (*Argued*: same behaviour on every valid input):
 
 - `nrows`: deleting the final `return None` (the implicit return is `None`); `s[0]` → `s[-1]` in the property, twice (all sides are equal there).
 - `as_tri`: `a.shape[0]` → `a.shape[1]` or `a.shape[-1]`, in the equal-sides check and in the default `end`, four mutants (the sides are equal by then).
 - `__array_wrap__`: the default of `return_scalar` flipped (the parameter is accepted for NumPy 2's signature but not used).
 - `diag`: the placeholder index for positions outside the array, `0` → `-1` (both are valid indices and those values are then set to 0; `0` → `1` is killed by the thin-slice test); `move[0]` → `move[-1]` in the scalar check (as in Phase 1).
-- `as_tri`: `moves[0] * -1` → `moves[0] / -1` (as in Phase 1: the float result is stored back into an integer array).
 
 Run time: about 8 minutes on 3 parallel jobs here.
 

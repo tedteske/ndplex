@@ -308,7 +308,12 @@ class ndplex(np.ndarray):
         the array along its anti-diagonals.
 
         In the simplest case, Pascal's rectangle as Pascal's triangle,
-        justified left. Returns the result (it does not print it).
+        justified left. Every layer is justified left (toward index 0 on
+        each axis): element [k][x_1, ..., x_(n-1)] is the node whose
+        coordinates are x_1, ..., x_(n-1) on the axes other than axis n-2,
+        and k - (x_1 + ... + x_(n-1)) on axis n-2. In 4-D, tri[k][a, b, c]
+        is the node (a, b, k - a - b - c, c). Returns the result (it does
+        not print it).
 
         Parameters
         ----------
@@ -334,21 +339,28 @@ class ndplex(np.ndarray):
         if end is None:
             end = a.shape[0] - 1
 
-        # The moves follow this pattern (move[0] differs from the rest):
+        # The cross-section of layer i starts at the node with i on the
+        # pivot axis (ndim - 2) and 0 elsewhere. Each move takes one step
+        # from the pivot axis to another axis: first the last axis, then
+        # the axes before the pivot, nearest first.
         #   2-D: [(-1, 1)]
         #   3-D: [(0, -1, 1), (1, -1, 0)]
-        #   4-D: [(0, 0, -1, 1), (0, 1, -1, 0), (1, -1, 0, 0)]
-        ones = np.ones(ndim, dtype=int)
-        neg_ones = -np.ones(ndim - 1, dtype=int)
-        moves = np.delete(np.flip(np.diag(ones, 0) + np.diag(neg_ones, 1),
-                                  axis=0), 0, 0)
-        moves[0] = moves[0] * -1  # reverses 1 and -1 in move[0]
-        loc = [0] * ndim  # the cross-section starts at loc[-2] = i
+        #   4-D: [(0, 0, -1, 1), (0, 1, -1, 0), (1, 0, -1, 0)]
+        # So every layer is a left-justified simplex: in 4-D, element
+        # [a, b, c] of layer i is the node (a, b, i - a - b - c, c).
+        # (The notebook's pattern took later moves' steps from the
+        # neighbouring axis instead, which sheared layers in 4-D and up;
+        # 2-D and 3-D are unchanged.)
+        pivot = ndim - 2
+        unit = np.eye(ndim, dtype=int)
+        targets = [ndim - 1] + list(range(pivot - 1, -1, -1))
+        moves = np.array([unit[t] - unit[pivot] for t in targets])
+        loc = [0] * ndim  # the cross-section starts at loc[pivot] = i
 
         width = (end + 1,) * (ndim - 1)
         rows = []
         for i in range(start, end + 1):
-            loc[-2] = i
+            loc[pivot] = i
             values, inside = self._line(tuple(loc), moves)
             section = _trim_outside(values, inside)
             row = np.zeros(width, dtype=a.dtype)
