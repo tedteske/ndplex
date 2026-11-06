@@ -182,7 +182,7 @@ Run time: about 8 minutes on 3 parallel jobs here.
 ## 9. For later phases
 
 - **Phase 3 (tests and CI):** `tests.yml` as bounded-lognorm's. The minimum-dependency job is Python 3.10 with NumPy 1.23.5 (passes here); add matplotlib to one job so the style test runs.
-- **Phase 4 (packaging):** set the version to 0.1.0; rewrite README.md (it still copies the notebook's docstrings and is the PyPI page); recheck that `ndplex` is free on PyPI (it was on 6 Nov 2026).
+- **Phase 4 (packaging):** set the version to 0.1.0; rewrite README.md (it still copies the notebook's docstrings and is the PyPI page); recheck that `ndplex` is free on PyPI (it was on 6 Nov 2026). Cite Green (2015), *The Simplex, Duplex and Pascal's Triangles*, as a general source in the README and in `CITATION.cff` `references` (Ted's request; already in ATTRIBUTION.md).
 - **Phase 5 (examples notebook, `notebooks/ndplex_examples.ipynb`):** the name the `ImportError` message already points to.
     - `pip install ndplex` in the first cell.
     - A helper cell with `plot_ndplex` and `diag_as_hist`, fixed: `legend_handles`, no global font, colour cycling, negative values drawn, normal pdf in NumPy.

@@ -24,6 +24,8 @@ Attribution suggestion, not a rule: the usual convention in published work is th
 
 ### References
 
+**General source.** Ted cites Thomas M. Green's *The Simplex, Duplex and Pascal's Triangles* (2015; reference 10 below) as a general source for ndplex. The book covers Pascal's triangle and its relatives, simplexes, duplexes and higher-dimensional extensions, and recurrent sequences such as Fibonacci.
+
 **Code adapted in the notebook's library cell (not in the package)**
 
 1. `trim_trailing_zeros` (inside `diag`) is adapted from an answer to "Trim trailing zeros of a numpy array along each axis", Stack Overflow question 55917328. https://stackoverflow.com/questions/55917328
@@ -43,7 +45,7 @@ Attribution suggestion, not a rule: the usual convention in published work is th
 7. Pascal's triangle and the bell curve. AMS Feature Column. http://www.ams.org/publicoutreach/feature-column/fcarc-normal
 8. Pascal's triangle modulo n (Sierpinski's gasket). http://orion.math.iastate.edu/reu/oldREU/modupasc.htm
 9. Hypercube; Simplex. Wikipedia. https://en.wikipedia.org/wiki/Hypercube, https://en.wikipedia.org/wiki/Simplex
-10. *Simplex, Duplex and Pascal's Triangles: Excursions*. https://www.amazon.com/Simplex-Duplex-Pascals-Triangles-Excursions/dp/1514677091
+10. Green, Thomas M. *The Simplex, Duplex and Pascal's Triangles: Relatives of Pascal's Triangle, with Excursions Into Hyperspace*. CreateSpace Independent Publishing Platform, 2015. 176 pp. ISBN 9781514677094. https://books.google.com/books/about/The_Simplex_Duplex_and_Pascal_s_Triangle.html?id=P0cDswEACAAJ (also cited in the notebook, via https://www.amazon.com/Simplex-Duplex-Pascals-Triangles-Excursions/dp/1514677091). **A general source for the project** (see the note above), not only for the notebook section that cites it.
 11. Narayana's cows sequence, OEIS A000930 (https://oeis.org/A000930), and the paper linked from the notebook (JIM 96 proceedings). http://jim.afim-asso.org/jim96/actes/Allouche.ps
 
 **Used in the Phase 1 tests**
