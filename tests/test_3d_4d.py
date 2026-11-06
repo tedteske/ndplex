@@ -197,3 +197,16 @@ def test_3d_prime_edge():
                         14284168470, 345153963440])
     assert_array_equal(prime_xd.as_tri(sums=True),
                        [1, 4, 13, 41, 125, 379, 1139, 3421, 10265, 30799])
+
+
+def test_diag_with_partial_loc_returns_sub_arrays():
+    """A loc with fewer coordinates than dimensions starts at a sub-array
+    (the docstring's "1D array"): the result stacks whole layers or lines.
+    Pinned in Phase 2 from the notebook code's behaviour (checked equal to
+    tests/ndplex_original.py), not from a notebook example."""
+    p = ndplex(4, edges=3)
+    layers = p.diag(loc=(1,), move=(1,))
+    assert layers.shape == (3, 4, 4)
+    assert_array_equal(layers, np.asarray(p)[1:])
+    lines = p.diag(loc=(0, 1), move=(1, 0))
+    assert_array_equal(lines, np.asarray(p)[:, 1])
