@@ -147,7 +147,7 @@ def _package_copy(root, filename, source):
     """A copy of the package under root/ndplex with one file replaced."""
     dest = pathlib.Path(root) / "ndplex"
     shutil.copytree(PACKAGE, dest, ignore=shutil.ignore_patterns("__pycache__"))
-    (dest / filename).write_text(source)
+    (dest / filename).write_text(source, encoding="utf-8")
     return pathlib.Path(root)
 
 
@@ -196,7 +196,7 @@ def main():
             path = pathlib.Path(src).resolve()
             if path.parent != PACKAGE.resolve():
                 sys.exit(f"{src} is not a file of {PACKAGE}")
-            source = path.read_text()
+            source = path.read_text(encoding="utf-8")
             # The unmutated (re-unparsed) source must pass, or nothing means anything.
             base = _package_copy(pathlib.Path(tmp) / f"baseline_{path.stem}",
                                  path.name, ast.unparse(ast.parse(source)))
