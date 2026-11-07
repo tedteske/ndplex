@@ -22,7 +22,7 @@ As bounded-lognorm's `tests.yml`, adapted:
     - Linux, Python 3.10, NumPy 1.23.5 (the declared minimum, pinned by a constraints file).
     - macOS, Python 3.13, latest dependencies.
     - Windows, Python 3.13, latest dependencies.
-    - **Windows, Python 3.10, NumPy 1.23.5.** Not in bounded-lognorm's matrix and not in the Phase 3 brief. Added because it is the one configuration where NumPy's default integer (`dtype=int`) is int32 (finding P2); NumPy 2 made it int64 on Windows too. One extra job; drop it if you prefer the brief's single Windows run.
+    - **Windows, Python 3.10, NumPy 1.23.5.** Not in bounded-lognorm's matrix and not in the Phase 3 brief. Added because it is the one configuration where NumPy's default integer (`dtype=int`) is int32 (finding P2); NumPy 2 made it int64 on Windows too. Kept (Ted, 6 Nov 2026); it found P3.
 - **Build job:** builds the sdist and wheel, runs `twine check --strict`, installs the wheel in a clean venv and imports it outside the source tree, and uploads `dist/` as an artifact. The same steps pass locally (*Run*).
 - **Triggers:** pull requests, pushes to master, and by hand (`workflow_dispatch`). Read-only permissions; a newer run on the same branch cancels the older one.
 - **Report header:** every pytest run now prints the ndplex path, NumPy version, NumPy's default int, OS and machine, so a CI log shows which platform facts a result rests on.
@@ -68,7 +68,7 @@ As bounded-lognorm's `tests.yml`, adapted:
     - NumPy < 2 with int8/16/32 or unsigned dtypes: none for results; a warning now appears where values wrap. Silence it as in C3, or use `dtype=object`.
     - NumPy 2, a `func` returning an integer outside the dtype's range, or any NumPy with a Python int beyond int64: construction used to raise `OverflowError`; it now wraps and warns. Code that relied on the exception can turn the warning into an error: `with warnings.catch_warnings(): warnings.simplefilter("error", RuntimeWarning)`.
 - *Speed* (*Run*, A/B on the same machine, best of 15): default `ndplex(300)` and `ndplex(40, edges=3)`, no measurable change (within ±5% run-to-run noise). `ndplex(300, dtype=np.int32)` on NumPy 1.23.5 about 15% slower, since every value is checked there.
-- *Decision for Ted:* wrapping keeps C12 consistent with D3a (warn, keep NumPy's wrapped values). The alternative is to raise `OverflowError` for out-of-range `func` results on every NumPy version and warn only for overflow inside `func`. It is a few lines either way.
+- *Decision* (Ted, 6 Nov 2026): wrap and warn, consistent with D3a (warn, keep NumPy's wrapped values). The alternative was to raise `OverflowError` for out-of-range `func` results on every NumPy version.
 
 ---
 
@@ -104,12 +104,14 @@ Second run (*CI*, commit `4cbcb8a`): **all 11 jobs passed.** Per job, as the rep
 
 ---
 
-## 6. Differential and mutation checks: CI or on demand?
+## 6. Differential and mutation checks: a manually triggered workflow
 
-Both stay on demand for now; this is Ted's decision (see the PR description). Facts for it:
+**Decision** (Ted, 6 Nov 2026): both run by hand in a separate workflow, `.github/workflows/checks.yml`, not on every pull request. To run it: the repository's Actions tab → *checks* → *Run workflow*. Worth running after any change to `src/ndplex` and before each release.
 
-- The mutation check takes about 3 minutes on 2 cores here; a GitHub-hosted Linux runner has 4. The differential check takes seconds but needs scipy, seaborn, requests and matplotlib, because it loads the notebook's original code.
-- Neither changes unless `src/ndplex` changes, and both were run for this PR.
+- **Mutation job:** runs `tests/mutation_check.py --expect tests/mutation_equivalent.txt`. It fails unless the surviving mutants are exactly the 11 listed there as argued equivalent. A new survivor is either a gap in the tests or a new equivalent mutant to argue and list; a listed mutant that no longer survives means the list is stale. Each mutant is identified by file, original source line and change, not by line number, so edits elsewhere in the file do not break the list. The results (`mutation.json`) are uploaded as an artifact. Checked (*Run*): the real list matches; removing one entry, adding a false one, or a timed-out mutant each make it fail.
+- **Differential job:** installs the notebook's own dependencies (scipy, seaborn, requests, matplotlib) only for this job, since it loads the notebook's original code, and runs `tests/differential_check.py`, which fails on the first difference.
+- Timings: the mutation check took about 3 minutes on 2 cores here; the differential check about 6 seconds.
+- **Validated in CI** (*CI*, commit `4b05bf3`, with a temporary pull-request trigger, removed in the next commit): mutation job 479 mutants, 468 killed, 11 survived, matching the list, in under 3 minutes on 4 jobs; differential job all equal, 4822 comparisons, in under half a minute.
 
 ---
 

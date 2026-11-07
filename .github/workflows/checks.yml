@@ -4,8 +4,6 @@ name: checks
 # after changing src/ndplex and before a release. Not run on every PR.
 on:
   workflow_dispatch:
-  # TEMPORARY, to validate this workflow on PR #10; removed before merge.
-  pull_request:
 
 permissions:
   contents: read
