@@ -19,14 +19,14 @@ Attribution (see ATTRIBUTION.md for the tiered breakdown and references):
 """
 from ._core import ndplex
 
-__version__ = "0.1.0.dev0"
+__version__ = "0.1.0"
 
 __all__ = ["ndplex", "oeis", "__version__"]
 
 _MOVED = (
     "is not part of the ndplex package (from 0.1.0, plotting is left to the "
-    "user). A copy of the notebook's version is in the examples notebook, "
-    "notebooks/ndplex_examples.ipynb.")
+    "user). The notebook's version is in ndplex_array.ipynb, in the "
+    "repository: https://github.com/tedteske/ndplex")
 
 
 def __getattr__(name):
