@@ -6,6 +6,8 @@
 
 **Epistemic labels**, as before. *Run* = observed by running the code; true for what was run, not a guarantee beyond it. *CI* = observed in the GitHub Actions run on PR #10. *Argued* = reasoned from the code, not tested exhaustively. *Not checked* = could not be run.
 
+**Confidence in the platform results:** they show the suite passes on the CI runners' current images (macOS arm64, Windows x86-64); they are not proof for other machines.
+
 **Local environments** (*Run*, Linux x86_64): Python 3.10.20, 3.11.18, 3.12.3, 3.13.18, 3.14.6 and 3.15.0b4 with the latest NumPy each supports (2.2.6 on 3.10, 2.4.6 on 3.11, 2.5.4 on the rest), and Python 3.10.20 with NumPy 1.23.5.
 
 ---
@@ -25,7 +27,7 @@ As bounded-lognorm's `tests.yml`, adapted:
 - **Triggers:** pull requests, pushes to master, and by hand (`workflow_dispatch`). Read-only permissions; a newer run on the same branch cancels the older one.
 - **Report header:** every pytest run now prints the ndplex path, NumPy version, NumPy's default int, OS and machine, so a CI log shows which platform facts a result rests on.
 
-**Result:** see §5.
+**Result:** all 11 jobs pass (§5).
 
 ---
 
@@ -90,7 +92,15 @@ As bounded-lognorm's `tests.yml`, adapted:
 
 First run (*CI*, commit `66aa9bd`): 10 of 11 jobs passed. Linux 3.10–3.15 (latest NumPy), Linux 3.10 on NumPy 1.23.5, Linux with matplotlib, macOS, Windows 3.13 (NumPy 2.5.4, default int int64) and the build job passed. Windows 3.10 on NumPy 1.23.5 (default int int32) failed one test: P3, fixed in the next commit.
 
-Second run: see the PR.
+Second run (*CI*, commit `4cbcb8a`): **all 11 jobs passed.** Per job, as the report header shows it:
+
+- Linux x86-64: Python 3.10.22 (NumPy 2.2.6), 3.11.18 (2.4.6), 3.12.16, 3.13.18, 3.14.10 and 3.15.2 (2.5.4): 191 passed, 1 skipped (matplotlib).
+- Linux, Python 3.13.18 with matplotlib: 192 passed, nothing skipped.
+- Linux, Python 3.10.22, NumPy 1.23.5: 191 passed, 1 skipped.
+- macOS arm64, Python 3.13.17, NumPy 2.5.4: 191 passed, 1 skipped.
+- Windows AMD64, Python 3.13.17, NumPy 2.5.4 (default int int64): 191 passed, 1 skipped.
+- Windows AMD64, Python 3.10.11, NumPy 1.23.5 (default int int32): 191 passed, 1 skipped.
+- Build and check: sdist and wheel built, `twine check --strict` passed, the wheel imports from a clean venv.
 
 ---
 
