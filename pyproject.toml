@@ -57,6 +57,7 @@ include = [
     "README.md",
     "CHANGELOG.md",
     "ATTRIBUTION.md",
+    "CITATION.cff",
     "LICENSE",
 ]
 

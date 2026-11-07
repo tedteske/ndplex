@@ -1,0 +1,42 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata from this file."
+type: software
+title: "ndplex: the n-Dimensional m-Plex array, a generic Pascal's array for NumPy"
+abstract: >-
+  A generic Pascal's array of any dimension, as a NumPy array subclass: by
+  default Pascal's rectangle, cube or hypercube, with user-defined edges,
+  node-generating function and argument locations. Includes lines and
+  cross-sections through the array (diag), the array as a triangle,
+  tetrahedron or n-simplex (as_tri), and row-by-row lookup in the On-Line
+  Encyclopedia of Integer Sequences (oeis).
+authors:
+  - family-names: Teske
+    given-names: Ted
+version: 0.1.0
+license: MIT
+# The Zenodo concept DOI and the version DOIs are added after the first
+# Zenodo-archived release (0.1.0).
+repository-code: "https://github.com/tedteske/ndplex"
+url: "https://pypi.org/project/ndplex/"
+keywords:
+  - Pascal's triangle
+  - Pascal's array
+  - combinatorics
+  - binomial coefficients
+  - multinomial coefficients
+  - simplex
+  - integer sequences
+  - OEIS
+  - NumPy
+references:
+  - type: book
+    title: "The Simplex, Duplex and Pascal's Triangles: Relatives of Pascal's Triangle, with Excursions Into Hyperspace"
+    authors:
+      - family-names: Green
+        given-names: Thomas M.
+    year: 2015
+    publisher:
+      name: CreateSpace Independent Publishing Platform
+    isbn: "9781514677094"
+    pages: 176
+    notes: "A general source for ndplex."
