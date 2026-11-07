@@ -68,9 +68,12 @@ class ndplex(np.ndarray):
     dtype : numpy dtype
         Default np.int64 on every platform. int64 is exact only while every
         node fits: the default 2-D array is exact for i + j <= 66 and the
-        default 3-D array for i + j + k <= 43. If any node overflows, one
-        RuntimeWarning names the first node that did; values are kept as
-        numpy computes them (wrapped modulo 2**64). Use dtype=object for
+        default 3-D array for i + j + k <= 43. If any node overflows (in
+        func's arithmetic, or because func returns an integer that does not
+        fit dtype), one RuntimeWarning names the first node that did; values
+        are kept as numpy computes them (wrapped modulo 2**64, or 2**bits
+        for a narrower integer dtype). The same holds on every platform and
+        NumPy version. Use dtype=object for
         exact integers of any size, or reduce inside `func` (for example a
         modulus) when only a residue is needed.
 
@@ -150,6 +153,22 @@ class ndplex(np.ndarray):
                 offsets.append(tuple(offset))
 
         zero = base.dtype.type(0)  # for dtype=object, the Python int 0
+        # Integer dtypes: also check that each integer func returns fits the
+        # dtype before it is stored, and wrap it if not. numpy's own overflow
+        # check (errstate, below) only sees overflow inside func's
+        # arithmetic, and numpy handles a value too wide for the dtype
+        # differently by version: NumPy < 2 wraps it silently on assignment,
+        # NumPy 2 raises OverflowError. The wide value is what the default
+        # func=sum returns on NumPy < 2 for dtypes narrower than the
+        # platform's default int (int8/16/32 on Linux and macOS), because
+        # sum's start value 0 promotes the total to that default int.
+        if np.issubdtype(base.dtype, np.integer):
+            info = np.iinfo(base.dtype)
+            low, high = int(info.min), int(info.max)
+            span = high - low + 1  # 2**bits
+            stored_type = base.dtype.type  # values of this type always fit
+        else:
+            low = None
         first_overflow = None
         with np.errstate(over="raise"):
             for node in it.product(range(nrows), repeat=ndim):
@@ -168,6 +187,13 @@ class ndplex(np.ndarray):
                         value = func(args)
                     if first_overflow is None:
                         first_overflow = node
+                if (low is not None and type(value) is not stored_type
+                        and isinstance(value, (int, np.integer))):
+                    v = int(value)
+                    if not low <= v <= high:
+                        value = (v - low) % span + low  # wrap, as numpy does
+                        if first_overflow is None:
+                            first_overflow = node
                 base[node] = value
 
         if first_overflow is not None:

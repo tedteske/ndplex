@@ -1,0 +1,101 @@
+name: tests
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: ${{ matrix.os }} / Python ${{ matrix.python }} / ${{ matrix.deps }} deps${{ matrix.mpl && ' / matplotlib' || '' }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
+        deps: [latest]
+        include:
+          # matplotlib in one job, so the import-style test runs (it must
+          # not skip there: NDPLEX_REQUIRE_MATPLOTLIB below).
+          - { os: ubuntu-latest, python: "3.13", deps: latest, mpl: true }
+          # The declared floor (pyproject.toml): oldest Python and NumPy.
+          - { os: ubuntu-latest, python: "3.10", deps: minimum }
+          # Other platforms.
+          - { os: macos-latest, python: "3.13", deps: latest }
+          - { os: windows-latest, python: "3.13", deps: latest }
+          # Windows on NumPy < 2 is the one place numpy's default int
+          # (dtype=int) is int32 (docs/phase3_ci.md, P2).
+          - { os: windows-latest, python: "3.10", deps: minimum }
+    env:
+      NDPLEX_REQUIRE_MATPLOTLIB: ${{ matrix.mpl && '1' || '' }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python }}
+          allow-prereleases: true
+
+      - name: Pin the minimum supported NumPy
+        if: matrix.deps == 'minimum'
+        shell: bash
+        run: printf 'numpy==1.23.5\n' > "$RUNNER_TEMP/constraints.txt"
+
+      - name: Install the package (not editable) and the test group
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          if [ "${{ matrix.deps }}" = minimum ]; then
+            python -m pip install . --group test -c "$RUNNER_TEMP/constraints.txt"
+          else
+            python -m pip install . --group test
+          fi
+          if [ "${{ matrix.mpl }}" = true ]; then
+            python -m pip install matplotlib
+            python -c "import matplotlib; print('matplotlib', matplotlib.__version__)"
+          fi
+          python -c "import sys, numpy, ndplex; print(sys.version); print('numpy', numpy.__version__, 'default int', numpy.dtype(int)); print('ndplex', ndplex.__version__, ndplex.__file__)"
+
+      - name: Run the test suite
+        run: python -m pytest
+
+  build:
+    name: Build and check the distribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: Build sdist and wheel
+        run: |
+          python -m pip install --upgrade pip build twine
+          python -m build
+          python -m twine check --strict dist/*
+
+      - name: Install the wheel in a clean environment and import it
+        run: |
+          python -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/python" -m pip install dist/*.whl
+          cd "$RUNNER_TEMP"
+          "$RUNNER_TEMP/venv/bin/python" -c "from ndplex import ndplex, __version__; print(__version__, ndplex(5).as_tri(sums=True).tolist())"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/

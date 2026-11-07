@@ -48,7 +48,10 @@ def p():
 def test_default_rectangle_values(p):
     assert_array_equal(p, PASCAL_9)
     assert p.shape == (9, 9)
-    assert p.dtype == np.dtype(int)
+    # np.int64 on every platform (Phase 2, C7). Until Phase 3 this line was
+    # `== np.dtype(int)`, the notebook's platform default, which equals
+    # int64 except on Windows with NumPy < 2 (docs/phase3_ci.md, P3).
+    assert p.dtype == np.int64
 
 
 def test_default_attributes(p):

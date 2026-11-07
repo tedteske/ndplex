@@ -11,6 +11,13 @@ change (same behaviour) or a gap in the tests.
     python tests/mutation_check.py --src src/ndplex/_oeis.py
     python tests/mutation_check.py --scope ndplex        # just the class
     python tests/mutation_check.py --jobs 4 --json out.json
+    python tests/mutation_check.py --expect tests/mutation_equivalent.txt
+
+With --expect, the run fails (exit 1) unless the mutants that survive are
+exactly those listed in the file: the ones argued equivalent in the phase
+notes. Each is identified by file, the original source line and the change,
+not by line number, so the list survives edits elsewhere in the file. The
+manually triggered `checks` workflow runs it this way.
 
 Run it with the Python that has the package's test dependencies installed.
 Each mutant is a full copy of src/ndplex in a temporary directory, passed to
@@ -133,6 +140,48 @@ def _apply(node, kind, variant):
         getattr(node, field)[k] = ast.Pass()
 
 
+def _stable_id(filename, lines, desc):
+    """file | original source line | change, without the line number."""
+    head, _, change = desc.partition(": ")
+    line = lines[int(head[1:]) - 1].strip()
+    return f"{filename} | {line} | {change}"
+
+
+def _read_expected(path):
+    """Stable ids, one per line; blank lines and # comments are ignored."""
+    ids = []
+    for raw in pathlib.Path(path).read_text(encoding="utf-8").splitlines():
+        if raw.strip() and not raw.lstrip().startswith("#"):
+            ids.append(raw.strip())
+    return ids
+
+
+def _compare_with_expected(results, path):
+    """0 if the survivors are exactly the expected ones, else 1 (reported)."""
+    expected = sorted(_read_expected(path))
+    survived = sorted(r["stable_id"] for r in results if r["status"] == "survived")
+    other = [r for r in results if r["status"] not in ("killed", "survived")]
+    unexpected = list(survived)
+    missing = []
+    for e in expected:
+        if e in unexpected:
+            unexpected.remove(e)
+        else:
+            missing.append(e)
+    for e in unexpected:
+        print("UNEXPECTED SURVIVOR (a gap in the tests, or a new equivalent "
+              "mutant to argue and list):", e)
+    for e in missing:
+        print("LISTED BUT NOT SURVIVING (killed now, or the code changed; "
+              "update the list):", e)
+    for r in other:
+        print(f"{r['status'].upper()}:", r["stable_id"], r["detail"])
+    ok = not (unexpected or missing or other)
+    print(f"expected survivors: {len(expected)}; survived: {len(survived)}; "
+          + ("matches the list" if ok else "DOES NOT match the list"))
+    return 0 if ok else 1
+
+
 def mutants(source, scope):
     n = sum(1 for _ in _sites(ast.parse(source), scope))
     for i in range(n):
@@ -147,7 +196,7 @@ def _package_copy(root, filename, source):
     """A copy of the package under root/ndplex with one file replaced."""
     dest = pathlib.Path(root) / "ndplex"
     shutil.copytree(PACKAGE, dest, ignore=shutil.ignore_patterns("__pycache__"))
-    (dest / filename).write_text(source)
+    (dest / filename).write_text(source, encoding="utf-8")
     return pathlib.Path(root)
 
 
@@ -169,13 +218,13 @@ def run_suite(root, timeout):
 
 
 def _one(args):
-    key, filename, desc, src, tmpdir, timeout = args
+    key, filename, desc, src, tmpdir, timeout, stable = args
     root = _package_copy(pathlib.Path(tmpdir) / key, filename, src)
     t0 = time.time()
     status, detail = run_suite(root, timeout)
     shutil.rmtree(root, ignore_errors=True)
-    return dict(id=key, mutation=f"{filename} {desc}", status=status,
-                detail=detail, seconds=round(time.time() - t0, 1))
+    return dict(id=key, mutation=f"{filename} {desc}", stable_id=stable,
+                status=status, detail=detail, seconds=round(time.time() - t0, 1))
 
 
 def main():
@@ -187,6 +236,8 @@ def main():
     ap.add_argument("--jobs", type=int, default=os.cpu_count() or 1)
     ap.add_argument("--timeout", type=float, default=120)
     ap.add_argument("--json")
+    ap.add_argument("--expect", help="file listing the expected (equivalent) "
+                                     "survivors by stable id; fail on any difference")
     ap.add_argument("--only", nargs="*", help="mutant ids to run, e.g. _core.py:12")
     args = ap.parse_args()
 
@@ -196,17 +247,19 @@ def main():
             path = pathlib.Path(src).resolve()
             if path.parent != PACKAGE.resolve():
                 sys.exit(f"{src} is not a file of {PACKAGE}")
-            source = path.read_text()
+            source = path.read_text(encoding="utf-8")
             # The unmutated (re-unparsed) source must pass, or nothing means anything.
             base = _package_copy(pathlib.Path(tmp) / f"baseline_{path.stem}",
                                  path.name, ast.unparse(ast.parse(source)))
             status, detail = run_suite(base, args.timeout)
             if status != "survived":
                 sys.exit(f"baseline for {path.name} does not pass: {status} {detail}")
+            lines = source.splitlines()
             for i, d, s in mutants(source, args.scope):
                 key = f"{path.name}:{i}"
                 if not args.only or key in args.only:
-                    work.append((key, path.name, d, s, tmp, args.timeout))
+                    work.append((key, path.name, d, s, tmp, args.timeout,
+                                 _stable_id(path.name, lines, d)))
         print(f"{len(work)} mutants, scope {args.scope or 'all'}, {args.jobs} jobs",
               flush=True)
         results = []
@@ -222,6 +275,8 @@ def main():
     print("summary:", counts)
     if args.json:
         pathlib.Path(args.json).write_text(json.dumps(results, indent=1))
+    if args.expect:
+        sys.exit(_compare_with_expected(results, args.expect))
 
 
 if __name__ == "__main__":

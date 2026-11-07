@@ -10,6 +10,8 @@ First version as a package. Before this, ndplex was the first code cell of `ndpl
 - **Plotting is left out.** `plot_ndplex` and `diag_as_hist` are not in the package; importing them raises an `ImportError` that points to the examples notebook, which will carry a working copy.
 - **No import side effects.** Importing no longer silences warnings or restyles matplotlib.
 - **Overflow is reported.** If any node overflows the dtype, construction issues one `RuntimeWarning` naming the first node that did. Values are unchanged. `dtype=object` is exact, now including sums in `diag` and `as_tri` past 2^63.
+- **Overflow is reported for every integer dtype, on every NumPy version** (Phase 3, `docs/phase3_ci.md`, C12). On NumPy < 2, overflow in int8, int16, int32 and unsigned arrays went unreported. An integer from `func` that does not fit the dtype is now wrapped and reported, where it used to wrap silently (NumPy < 2) or raise `OverflowError` (NumPy 2, or a Python int beyond int64).
+- **CI.** Tests run on Linux (Python 3.10–3.15), macOS and Windows, on NumPy 1.23.5 and the latest NumPy.
 - **Derived arrays keep working.** `diag` works on slices, arithmetic results, copies and unpickled arrays. Reductions (`sum`, `max`, ...) return plain scalars. Pickling keeps `edges`, `func` and `arg_locs` (a `func` that cannot be pickled comes back as `None`).
 - **`arg_locs` outside the array read 0** instead of wrapping around to the far side. Positive offsets raise `ValueError`. The default is `arg_locs=None`.
 - **`diag` ends where the moves leave the array**, so genuine trailing zeros are kept and all-zero lines return zeros instead of raising `IndexError`.

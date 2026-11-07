@@ -13,6 +13,7 @@ pin behaviour that did not change.
 """
 import copy
 import math
+import os
 import pickle
 import re
 import subprocess
@@ -47,8 +48,15 @@ def test_import_leaves_warning_filters_alone():
 
 
 def test_import_leaves_matplotlib_style_alone():
-    """F1. Phase 2: fixed (C1); the package no longer touches matplotlib."""
-    pytest.importorskip("matplotlib")
+    """F1. Phase 2: fixed (C1); the package no longer touches matplotlib.
+
+    Skipped without matplotlib, except where NDPLEX_REQUIRE_MATPLOTLIB is
+    set (the CI job that installs it), so that job cannot skip it silently.
+    """
+    if os.environ.get("NDPLEX_REQUIRE_MATPLOTLIB"):
+        import matplotlib  # noqa: F401  (fail, not skip, if missing)
+    else:
+        pytest.importorskip("matplotlib")
     out = _import_in_fresh_process(
         "print(mpl.rcParams['axes.facecolor'] == face)",
         before="import matplotlib as mpl; mpl.use('Agg')\n"

@@ -1,0 +1,30 @@
+# Mutants argued equivalent: same behaviour on every valid input.
+# tests/mutation_check.py --expect fails unless the survivors are exactly
+# these. Format: file | original source line | change (no line numbers).
+# Arguments: docs/phase2_package.md section 7 (the first ten) and
+# docs/phase3_ci.md section 4 (the last).
+
+# nrows: the implicit return is None.
+_core.py | return None | delete statement `return None`
+# nrows: all sides are equal at these points, so s[0] and s[-1] agree.
+_core.py | return s[0] | 0 -> -1
+_core.py | if s and all(x == s[0] for x in s): | 0 -> -1
+
+# __array_wrap__: return_scalar is accepted for NumPy 2's signature, not used.
+_core.py | def __array_wrap__(self, obj, context=None, return_scalar=False): | False -> True
+
+# diag: the scalar check reads move[0] or move[-1]; all moves have the same type.
+_core.py | if np.isscalar(move[0]): | 0 -> -1
+# diag: placeholder index for positions outside the array; both 0 and -1 are
+# valid indices and those values are then set to 0.
+_core.py | index = tuple(np.where(inside, coords, 0)) | 0 -> -1
+
+# as_tri: the sides are equal by then (checked first), so any axis will do.
+_core.py | end = a.shape[0] - 1 | 0 -> 1
+_core.py | end = a.shape[0] - 1 | 0 -> -1
+_core.py | if any(x != a.shape[0] for x in a.shape): | 0 -> 1
+_core.py | if any(x != a.shape[0] for x in a.shape): | 0 -> -1
+
+# Construction (C12): low is 0 or -2**(bits-1), so 2*low is 0 or -2**bits,
+# and v - low and v + low are congruent modulo span = 2**bits.
+_core.py | value = (v - low) % span + low  # wrap, as numpy does | Sub -> Add

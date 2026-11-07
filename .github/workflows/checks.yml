@@ -1,0 +1,59 @@
+name: checks
+
+# Slower checks, run by hand (Actions tab -> checks -> Run workflow), e.g.
+# after changing src/ndplex and before a release. Not run on every PR.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mutation:
+    name: Mutation check (survivors must match tests/mutation_equivalent.txt)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: Install the package and the test group
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install . --group test
+
+      - name: Run the mutation check
+        run: >
+          python tests/mutation_check.py --jobs 4 --json mutation.json
+          --expect tests/mutation_equivalent.txt
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: mutation-results
+          path: mutation.json
+
+  differential:
+    name: Differential check (package vs the notebook's code)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      # The notebook's original code needs its own imports.
+      - name: Install the package and the notebook's dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install . scipy seaborn requests matplotlib
+
+      - name: Run the differential check
+        run: python tests/differential_check.py
