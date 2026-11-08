@@ -17,5 +17,5 @@ First release, and the first version as a package. Before this, ndplex was the f
 - **`diag` ends where the moves leave the array**, so genuine trailing zeros are kept and all-zero lines return zeros instead of raising `IndexError`.
 - **`as_tri` layers are left-justified in every dimension.** 2-D and 3-D are unchanged; from 4-D up the notebook's layers were sheared. Values and sums are unchanged.
 - **Arguments.** NumPy integer `edges` accepted; bad arguments raise `ValueError` with a message; the default dtype is `np.int64` on every platform; the default `func` is the builtin `sum`.
-- **`oeis`.** https and a timeout; network or format failures print `lookup failed (...)` instead of `no match`; `quiet=True` returns the results instead of printing.
+- **`oeis`.** https and a timeout; requests name ndplex in their User-Agent header, because oeis.org now refuses Python's default one (C14); network or format failures print `lookup failed (...)` instead of `no match`; `quiet=True` returns the results instead of printing.
 - **Release.** Published to PyPI with Trusted Publishing (`.github/workflows/publish.yml`). The README is now the package's own documentation, and its examples run as tests. `CITATION.cff` added.

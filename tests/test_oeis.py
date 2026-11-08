@@ -22,7 +22,7 @@ import urllib.parse
 import numpy as np
 import pytest
 
-from _impl import ndplex, oeis, oeis_module
+from _impl import impl, ndplex, oeis, oeis_module
 
 NAMES = {
     "1,1,1,1,1": "A000012 The simplest sequence of positive numbers: the all 1's sequence.",
@@ -185,8 +185,10 @@ def test_rejects_3d_input(fake):
 
 def test_network_call_decodes_utf8(monkeypatch):
     """The one function that touches the network, with urllib's urlopen
-    replaced: it passes the URL and timeout on and decodes the answer as
-    UTF-8, replacing undecodable bytes instead of failing."""
+    replaced: it passes the URL and timeout on, names ndplex and its version
+    in the User-Agent header (Phase 4, C14: oeis.org refuses Python's
+    default one), and decodes the answer as UTF-8, replacing undecodable
+    bytes instead of failing."""
     seen = {}
 
     class Response:
@@ -199,10 +201,14 @@ def test_network_call_decodes_utf8(monkeypatch):
         def read(self):
             return "café ".encode("utf-8") + b"\xff"
 
-    def fake_urlopen(url, timeout):
-        seen.update(url=url, timeout=timeout)
+    def fake_urlopen(request, timeout):
+        seen.update(url=request.full_url, timeout=timeout,
+                    headers=dict(request.header_items()))
         return Response()
 
     monkeypatch.setattr(oeis_module.urllib.request, "urlopen", fake_urlopen)
     assert oeis_module.urlopen("https://oeis.org/x", 3) == "café \ufffd"
-    assert seen == {"url": "https://oeis.org/x", "timeout": 3}
+    assert seen == {
+        "url": "https://oeis.org/x", "timeout": 3,
+        "headers": {"User-agent": f"ndplex/{impl.__version__} "
+                                  "(+https://github.com/tedteske/ndplex)"}}
