@@ -1,5 +1,7 @@
 # ndplex
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24054477.svg)](https://doi.org/10.5281/zenodo.24054477)
+
 **The n-Dimensional m-Plex array: a generic Pascal's array for NumPy.**
 
 `ndplex` builds Pascal's rectangle, cube or hypercube as a NumPy array, and lets you change everything that defines it: the values on its edges, the rule that generates each interior node, and which neighbours that rule reads. It can then cut lines and cross-sections through the array, show the array as a triangle, tetrahedron or n-simplex, and look its rows up in the [On-Line Encyclopedia of Integer Sequences](https://oeis.org).
@@ -160,7 +162,7 @@ The packaging, tests and audit (2026) were developed with assistance from Claude
 
 ## Citing
 
-If you use ndplex in published work, please cite it. GitHub's "Cite this repository" button gives APA and BibTeX from [`CITATION.cff`](https://github.com/tedteske/ndplex/blob/master/CITATION.cff). Releases are archived on Zenodo; version 0.1.0 is [10.5281/zenodo.24054478](https://doi.org/10.5281/zenodo.24054478).
+If you use ndplex in published work, please cite it. GitHub's "Cite this repository" button gives APA and BibTeX from [`CITATION.cff`](https://github.com/tedteske/ndplex/blob/master/CITATION.cff). Releases are archived on Zenodo: [10.5281/zenodo.24054477](https://doi.org/10.5281/zenodo.24054477) cites all versions (and resolves to the latest); each version also has its own DOI, listed on that record, for citing the exact release you used (0.1.0: [10.5281/zenodo.24054478](https://doi.org/10.5281/zenodo.24054478)).
 
 ## License
 
