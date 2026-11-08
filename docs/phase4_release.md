@@ -1,6 +1,6 @@
 # ndplex — Phase 4: Packaging and release
 
-**Status:** PR #11 merged (`ea2f5fc`). The TestPyPI dry run of 0.1.0 (7 Nov 2026) found P4: oeis.org refused every `oeis` request. The fix (C14, PR #12) passed the TestPyPI check as 0.1.0.dev1 in Colab on 8 Nov 2026, including the live OEIS lookups; the version is back to 0.1.0. Nothing is on PyPI. §8 is filled in after the release.
+**Status:** released. ndplex 0.1.0 is on PyPI (8 Nov 2026) and archived on Zenodo; the release record is §8.
 
 **Carried over from Phase 3** (PR #10, merged as `34ced3e`): `tests.yml` (11 jobs, all passing), `checks.yml` (mutation and differential checks, run by hand), `docs/phase3_ci.md` (findings P1–P3, change C12), the suite (191 passed, 1 skipped; 192 with matplotlib), and the to-do lists in `docs/phase2_package.md` §9 and `docs/phase3_ci.md` §8.
 
@@ -97,12 +97,17 @@ Zenodo archives the release when it is published (step 3), whether or not the Py
 
 ## 8. Release record: 0.1.0
 
-*Filled in after the release.*
+- **CI:** PR #11 and PR #12, and their merge commits `ea2f5fc` and `2c32bc8`: all 11 jobs of `tests.yml` passed.
+- **TestPyPI dry runs:** 0.1.0 from `master` (run 42384434504, 7 Nov) uploaded and installed, and found P4. 0.1.0.dev1 from the PR #12 branch (run 42488348395, 8 Nov) uploaded and passed every cell of the Colab check (§7).
+- **PyPI release:** GitHub release `v0.1.0` at `2c32bc8`, published by Ted at 2026-11-08 14:30:54 UTC. Publish run 42490176554: the build job (tag check, `twine check --strict`, the suite against the built wheel) passed; the `pypi` job, approved by Ted, uploaded at 14:32:53 UTC. https://pypi.org/project/ndplex/0.1.0/
+- **Files on PyPI:** `ndplex-0.1.0-py3-none-any.whl` (sha256 `4d77fee268e60c55d0a36a47268fc86b80b20dfc9305881cabde1e398cee0352`) and `ndplex-0.1.0.tar.gz` (sha256 `b9016870928f53b200202a3b70f1619fcab27526481ca80513bb5f5573793be3`). Both carry PyPI provenance attestations naming publisher GitHub `tedteske/ndplex`, workflow `publish.yml`. PyPI lists `Requires-Python >=3.10`, `numpy>=1.23.5` and license MIT; 0.1.0 is the only version.
+- **Check after release** (*Run*, Linux, 8 Nov): both files downloaded from PyPI match their published sha256. `pip install ndplex==0.1.0` from PyPI into clean environments gave 0.1.0 from `site-packages` on Python 3.13.18 with NumPy 2.5.4 and on Python 3.10.20 with NumPy 1.23.5. The sdist's suite, run against each install, gave 192 passed, 2 skipped (matplotlib not installed; the notebook, not in the sdist), including the README examples. The installed `oeis` carries C14.
+- **Zenodo:** the integration was switched on before the release, so the release was archived: version 0.1.0 is [10.5281/zenodo.24054478](https://doi.org/10.5281/zenodo.24054478), and the concept DOI for all versions, which always resolves to the latest, is [10.5281/zenodo.24054477](https://doi.org/10.5281/zenodo.24054477) (both as given by Ted from the Zenodo record; Zenodo, doi.org and DataCite cannot be reached from this environment, so they were not resolved here). The concept DOI is in `CITATION.cff` (`doi`) and the README badge; both DOIs are in `CITATION.cff` (`identifiers`) and the README's Citing section.
+- **Release notes:** pasted into the GitHub release as plain text, so the CHANGELOG and docs links in them are not links. Editing the release does not change the Zenodo record.
 
 ## 9. Not checked
 
-- **PyPI upload, the `pypi` approval gate:** the release.
-- **The README as PyPI renders it:** `twine check` passes, but the page itself is seen first on TestPyPI.
+- **The README as PyPI renders it:** `twine check` passes; pypi.org answers this environment's requests for the page with a bot challenge, so the rendered page was not seen here.
 
 ## 10. For Phase 5
 

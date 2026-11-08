@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented here. The project follows [Semantic Versioning](https://semver.org/); while the version is 0.x, minor releases may change the API.
 
-## 0.1.0 (2026-11-06)
+## 0.1.0 (2026-11-08)
 
 First release, and the first version as a package. Before this, ndplex was the first code cell of `ndplex_array.ipynb` (Ted Teske, 2019–2024). The notebook's results are kept except where a change is listed below; each change is documented, with migration notes, in `docs/phase2_package.md`, `docs/phase3_ci.md` and `docs/phase4_release.md`.
 
