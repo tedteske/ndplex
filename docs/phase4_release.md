@@ -1,6 +1,6 @@
 # ndplex — Phase 4: Packaging and release
 
-**Status:** PR #11 merged (`ea2f5fc`). The TestPyPI dry run of 0.1.0 (7 Nov 2026) found P4: oeis.org refused every `oeis` request. The fix (C14) is in a second PR, to be tested on TestPyPI as 0.1.0.dev1 before the release (§6). Nothing is on PyPI. §8 is filled in after the release.
+**Status:** PR #11 merged (`ea2f5fc`). The TestPyPI dry run of 0.1.0 (7 Nov 2026) found P4: oeis.org refused every `oeis` request. The fix (C14, PR #12) passed the TestPyPI check as 0.1.0.dev1 in Colab on 8 Nov 2026, including the live OEIS lookups; the version is back to 0.1.0. Nothing is on PyPI. §8 is filled in after the release.
 
 **Carried over from Phase 3** (PR #10, merged as `34ced3e`): `tests.yml` (11 jobs, all passing), `checks.yml` (mutation and differential checks, run by hand), `docs/phase3_ci.md` (findings P1–P3, change C12), the suite (191 passed, 1 skipped; 192 with matplotlib), and the to-do lists in `docs/phase2_package.md` §9 and `docs/phase3_ci.md` §8.
 
@@ -28,7 +28,7 @@ No other behaviour changed: `src/ndplex/_core.py` and `src/ndplex/_oeis.py` are 
 
 *Found* in the TestPyPI check in Colab (7 Nov 2026, Python 3.13.18, NumPy 2.4.6): every `oeis` request got HTTP 403. *Diagnosed* by `ndplex_oeis_403_diagnostic.ipynb`, run by Ted in Colab the same day: oeis.org is served through Cloudflare, which answered 403 with body `error code: 1010` to all four URLs tried (search as text, search as JSON, home page, a sequence page) with Python's default header, and 200 with the expected content to all four with either a header naming ndplex or a browser-like one. Cloudflare's error 1010 is a refusal based on the client's signature. So the cause is the header, not Colab's network (*Run*, in Colab; true for that network on that day).
 
-The search answer in text format is unchanged in what `oeis` reads: it starts with the greeting line and has `%I`/`%S` lines for A000217; the `%N` line was beyond the 200 characters the diagnostic printed (*Run*, partially). The 0.1.0.dev1 Colab check runs the full lookups.
+The search answer in text format is unchanged in what `oeis` reads: it starts with the greeting line and has `%I`/`%S` lines for A000217; the `%N` line was beyond the 200 characters the diagnostic printed (*Run*, partially). The 0.1.0.dev1 Colab check then ran the full lookups (§7).
 
 ndplex names itself rather than imitating a browser: it is honest, and it lets OEIS contact or limit ndplex specifically. If OEIS later refuses that header too, the fix is theirs to grant or refuse, not ours to get around.
 
@@ -93,6 +93,7 @@ Zenodo archives the release when it is published (step 3), whether or not the Py
 - The Colab check notebook's Python cells, run locally against the wheel: cells 2, 3 and 6 print PASS; cells 4 and 5 report the failed lookups, because oeis.org is not reachable from here.
 - **TestPyPI dry run of 0.1.0** (7 Nov 2026, run `42384434504`): build and wheel tests passed, the TestPyPI upload passed, PyPI skipped. In Colab (Python 3.13.18, NumPy 2.4.6): installed from TestPyPI; all 9 array checks passed; `oeis` refused (P4). Two mistakes of the check notebook, not the package: cell 2 looked for `site-packages`, but Colab installs to `dist-packages`; cell 7 built the sdist to download it, which needs hatchling from TestPyPI. Both fixed in the dev1 check notebook.
 - **C14:** suite 194 passed (Python 3.13); on a local HTTP server, the request carries `User-Agent: ndplex/0.1.0.dev1 (+https://github.com/tedteske/ndplex)`; suite on Python 3.10 with NumPy 1.23.5: 193 passed, 1 skipped (matplotlib); mutation check: 482 mutants, 471 killed, 11 survived, exactly the 11 listed as equivalent (the 3 new mutants of the User-Agent code are killed); the dev1 check notebook's cells 2, 3, 6 and 7 (on the local sdist: 192 passed, 2 skipped) print PASS locally.
+- **TestPyPI check of 0.1.0.dev1** (8 Nov 2026, Colab, Python 3.13.18, NumPy 2.4.6), all cells PASS: installed from TestPyPI to `dist-packages`, warning filters unchanged; the 9 array checks; `oeis(ndplex(5))` against the live oeis.org found A000012, A000027, A000217, A000292 and A000332, the notebook's results, and `quiet=True` returned the same; failed lookups reported per row; the sdist's suite against the installed wheel, 193 passed, 1 skipped (the notebook, not in the sdist). The sequence names printed are OEIS's current ones and are longer than those in the notebook's saved outputs; names can change, A-numbers are what the check compares.
 
 ## 8. Release record: 0.1.0
 
@@ -101,7 +102,6 @@ Zenodo archives the release when it is published (step 3), whether or not the Py
 ## 9. Not checked
 
 - **PyPI upload, the `pypi` approval gate:** the release.
-- **The live OEIS with C14:** the 0.1.0.dev1 Colab check.
 - **The README as PyPI renders it:** `twine check` passes, but the page itself is seen first on TestPyPI.
 
 ## 10. For Phase 5
