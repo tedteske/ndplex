@@ -4,7 +4,8 @@ Sequences (https://oeis.org).
 
 Original function: Ted Teske, 2019-2024 (the notebook ndplex_array.ipynb).
 Package version (https, a timeout, standard library only, failures reported
-as failures): Ted Teske with Claude (Anthropic), 2026.
+as failures, a User-Agent naming ndplex): Ted Teske with Claude (Anthropic),
+2026.
 """
 import urllib.parse
 import urllib.request
@@ -14,12 +15,21 @@ import numpy as np
 __all__ = ["oeis"]
 
 SEARCH_URL = "https://oeis.org/search"
+USER_AGENT = "ndplex/{version} (+https://github.com/tedteske/ndplex)"
 _GREETING = "# Greetings from The On-Line Encyclopedia"
 
 
 def urlopen(url, timeout):
-    """The network call, kept separate so tests can replace it."""
-    with urllib.request.urlopen(url, timeout=timeout) as response:
+    """The network call, kept separate so tests can replace it.
+
+    The request names ndplex in its User-Agent header. oeis.org refuses
+    Python's default one ("Python-urllib/3.x") with HTTP 403 (Cloudflare
+    error 1010), checked from Google Colab on 7 Nov 2026.
+    """
+    from . import __version__  # here, not at the top: ndplex imports this module
+    request = urllib.request.Request(
+        url, headers={"User-Agent": USER_AGENT.format(version=__version__)})
+    with urllib.request.urlopen(request, timeout=timeout) as response:
         return response.read().decode("utf-8", errors="replace")
 
 

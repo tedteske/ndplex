@@ -142,7 +142,7 @@ oeis(ndplex(9).as_tri(), trim=True, size=5)   # rows of the triangle, zeros trim
 matches = oeis(ndplex(5), quiet=True)        # a list of (A-number, name) or None
 ```
 
-The output has one line per row, for example `row 2: https://oeis.org/A000217 Triangular numbers: ...`. The names come from OEIS and can change. If oeis.org cannot be reached, the row's line says `lookup failed (...)`.
+The output has one line per row, for example `row 2: https://oeis.org/A000217 Triangular numbers: ...`. The names come from OEIS and can change. If oeis.org cannot be reached or refuses the request, the row's line says `lookup failed (...)`. Each request identifies itself to oeis.org as `ndplex/<version>`.
 
 ## Plotting
 
