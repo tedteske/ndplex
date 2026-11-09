@@ -25,8 +25,9 @@ __all__ = ["ndplex", "oeis", "__version__"]
 
 _MOVED = (
     "is not part of the ndplex package (from 0.1.0, plotting is left to the "
-    "user). The notebook's version is in ndplex_array.ipynb, in the "
-    "repository: https://github.com/tedteske/ndplex")
+    "user). A working copy is in the helper cell of the examples notebook, "
+    "notebooks/ndplex_examples.ipynb: "
+    "https://github.com/tedteske/ndplex/blob/master/notebooks/ndplex_examples.ipynb")
 
 
 def __getattr__(name):
