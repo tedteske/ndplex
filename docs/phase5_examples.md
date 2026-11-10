@@ -1,6 +1,6 @@
 # ndplex — Phase 5: The examples notebook
 
-**Status:** `notebooks/ndplex_examples.ipynb` built and checked against ndplex 0.1.0 from PyPI, here and in Colab (9 Nov 2026, §4); oeis cells and link audit done (§4, §6). The plotting `ImportError` and the README point to the notebook (C13, amended). No release yet: whether these go out as 0.1.1 is Ted's decision (§8).
+**Status:** `notebooks/ndplex_examples.ipynb` built and checked against ndplex 0.1.0 from PyPI, here and in Colab (9 Nov 2026, §4); oeis cells and link audit done (§4, §6). The plotting `ImportError` and the README point to the notebook (C13, amended). Merged (PR #14). 0.1.1 is ready to release (§8, §10).
 
 **Carried over from Phase 4** (PRs #11–#13, master at `ddab8eb`): ndplex 0.1.0 on PyPI (8 Nov 2026, from `v0.1.0` at `2c32bc8`) and Zenodo (concept DOI 10.5281/zenodo.24054477); `oeis` names itself to oeis.org (C14); the suite (194 tests), CI and the publish workflow; the to-do lists in `docs/phase2_package.md` §9, `docs/phase3_ci.md` §8 and `docs/phase4_release.md` §10. `ndplex_array.ipynb` is unchanged and stays as the record of the original work.
 
@@ -92,11 +92,29 @@ Every link in `ndplex_array.ipynb`, `ATTRIBUTION.md` and the examples notebook: 
 - `phase5_link_check.ipynb`, run by Ted in Colab on 9 Nov 2026 (§6).
 - The notebook changed after the Colab run in its text only: E11, E12, and the link changes in §6. No code cell changed, so the comparison still holds; a re-run here gives the same result (*Run*).
 
-## 8. Decision for Ted
+## 8. Decision: release 0.1.1
 
-- **0.1.1 or wait.** The C13 message and the README's PyPI page change only with a release. Recommendation: release 0.1.1 after this PR is merged, because the 0.1.0 message sends users to the original notebook, whose `diag_as_hist` fails on matplotlib ≥ 3.9. This PR leaves the version at 0.1.0 and lists the changes under *Unreleased*; a release would be a separate small PR (`0.1.1.dev1` on TestPyPI first, as in Phase 4).
+Ted, 9 Nov 2026: merge PR #14 (merged as `1bac08e`) and release 0.1.1, so that the PyPI page and the plotting `ImportError` point to the examples notebook.
 
 ## 9. For later
 
 - Optional: open the four Stack Overflow links in a browser to confirm them (§6).
-- If 0.1.1 is released: the version bump, TestPyPI check, release notes, and the post-release PR with its Zenodo DOI, as in Phase 4.
+- After 0.1.1 is published: check a clean install from PyPI, and open the PR that records the release, its Zenodo DOI and `date-released` (§10).
+
+## 10. Releasing 0.1.1
+
+**The release PR** sets `__version__` to 0.1.1, `version: 0.1.1` in `CITATION.cff` (`date-released` comes back in the post-release PR, as in Phase 4), and the CHANGELOG heading *0.1.1 (2026-11-09)*. It changes the version test to 0.1.1, and adds `test_release_metadata_matches_version`: `CITATION.cff` and the latest CHANGELOG heading must name the package's version. Without the test change, the publish workflow would have failed at the suite (*Run*: the version test failed against the 0.1.1 wheel). Changing each of the three version strings in turn fails the new test (*Run*).
+
+**No TestPyPI dry run this time.** The package's code differs from 0.1.0 only in the `ImportError` message (`git diff v0.1.0 master -- src/`). The publish path (OIDC upload, the `pypi` approval, Zenodo) worked for 0.1.0, and the build, tag check and suite run again before the approval point. Replayed here (*Run*): the build, `twine check --strict` (both files pass), the tag check (accepts `v0.1.1`, rejects `v0.1.0`), and the suite against the wheel in a fresh environment.
+
+**Steps (Ted):**
+
+1. **Release:** Releases → Draft a new release → *Choose a tag* → type `v0.1.1` → *Create new tag on publish*, target `master`; title `ndplex 0.1.1`; paste the release notes below; tick *Set as the latest release*; *Publish release*.
+2. **Approve:** Actions → the publish run → *Review deployments* → tick `pypi` → *Approve and deploy*.
+3. Tell Claude, with the 0.1.1 DOI from the Zenodo record. Claude checks a clean install from PyPI and opens the PR that records the release.
+
+**Release notes:**
+
+> ndplex 0.1.1 adds an examples notebook, `notebooks/ndplex_examples.ipynb`: the original notebook's examples, run on the package installed from PyPI, with working copies of the plotting helpers `plot_ndplex` and `diag_as_hist`. Open it in Colab from the README.
+>
+> The `ImportError` raised by `from ndplex import plot_ndplex` (or `diag_as_hist`) now points to that notebook instead of the original one. Nothing else in the package changed. Details: CHANGELOG.md and docs/phase5_examples.md in the repository.

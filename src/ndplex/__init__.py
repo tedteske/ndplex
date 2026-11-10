@@ -19,7 +19,7 @@ Attribution (see ATTRIBUTION.md for the tiered breakdown and references):
 """
 from ._core import ndplex
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 __all__ = ["ndplex", "oeis", "__version__"]
 
