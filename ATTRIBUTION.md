@@ -57,4 +57,4 @@ Attribution suggestion, not a rule: the usual convention in published work is th
 12. Lucas's theorem (a binomial coefficient modulo a prime, from base-p digits); for p = 2 it gives: C(i + j, i) is odd exactly when i AND j = 0. https://en.wikipedia.org/wiki/Lucas%27s_theorem
 13. The multinomial theorem: the nodes of layer r of the d-dimensional default ndplex sum to d^r.
 
-*Link audit (Phase 5, `docs/phase5_examples.md` §6; checked in Colab on 9 Nov 2026).* All links above are live except reference 8, which is gone. The Stack Overflow links (references 1, 3 and 4) refused automated requests (HTTP 403), so they were not confirmed, but nothing suggests they are gone.
+*Link audit (Phase 5, `docs/phase5_examples.md` §6; checked in Colab on 9 Nov 2026).* All links above are live except reference 8, which is gone. The Stack Overflow links (references 1, 3 and 4) refused automated requests (HTTP 403); Ted opened them in a browser on 9 Nov 2026, and they work.
