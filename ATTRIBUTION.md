@@ -41,20 +41,20 @@ Attribution suggestion, not a rule: the usual convention in published work is th
 
 3. `sum_digits`, from Andreas K.'s answer to Stack Overflow question 48817036. https://stackoverflow.com/questions/48817036
 4. `primesfrom2to`, from an answer to Stack Overflow question 2068372. https://stackoverflow.com/questions/2068372
-5. The first 1000 primes, downloaded from a GitHub gist by cblanc. https://gist.github.com/cblanc/46ebbba6f42f61e60666 — the examples notebook computes them with `primesfrom2to` (reference 4) instead, so it needs no download.
+5. The first 1000 primes, downloaded from a GitHub gist by cblanc. https://gist.github.com/cblanc/46ebbba6f42f61e60666 — the examples notebook computes them with `primesfrom2to` (reference 4) instead, so it needs no download. The gist's 1000 numbers equal the sieve's (checked in Colab, 9 Nov 2026).
 
 **Mathematics and sources cited in the notebook**
 
 6. The On-Line Encyclopedia of Integer Sequences (OEIS). https://oeis.org — the source of the sequence names `oeis()` prints; its text output format is described at https://oeis.org/eishelp1.html.
-7. Phillips, Tony. "From Pascal's Triangle to the Bell-shaped Curve." AMS Feature Column, May 2010. https://www.ams.org/publicoutreach/feature-column/fcarc-normal (the notebook links it as http://; live at https, checked 8 Nov 2026).
-8. Pascal's triangle modulo n (Sierpinski's gasket). http://orion.math.iastate.edu/reu/oldREU/modupasc.htm — the examples notebook adds Wikipedia's "Sierpiński triangle" as a second source: https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle
+7. Phillips, Tony. "From Pascal's Triangle to the Bell-shaped Curve." AMS Feature Column, May 2010. https://www.ams.org/publicoutreach/feature-column/fcarc-normal (the notebook links it as http://, which refused automated requests from Colab; live at https, checked 8 and 9 Nov 2026).
+8. Pascal's triangle modulo n (Sierpinski's gasket), Iowa State REU. http://orion.math.iastate.edu/reu/oldREU/modupasc.htm — **no longer online** (it redirects to the department's home page; checked 9 Nov 2026). The examples notebook links Wikipedia's "Sierpiński triangle" instead: https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle
 9. Hypercube; Simplex. Wikipedia. https://en.wikipedia.org/wiki/Hypercube, https://en.wikipedia.org/wiki/Simplex
 10. Green, Thomas M. *The Simplex, Duplex and Pascal's Triangles: Relatives of Pascal's Triangle, with Excursions Into Hyperspace*. CreateSpace Independent Publishing Platform, 2015. 176 pp. ISBN 9781514677094. https://books.google.com/books/about/The_Simplex_Duplex_and_Pascal_s_Triangle.html?id=P0cDswEACAAJ (also cited in the notebook, via https://www.amazon.com/Simplex-Duplex-Pascals-Triangles-Excursions/dp/1514677091). **A general source for the project** (see the note above), not only for the notebook section that cites it.
-11. Narayana's cows sequence, OEIS A000930 (https://oeis.org/A000930), and the paper linked from the notebook: Allouche, Jean-Paul, and Tom Johnson. "Narayana's Cows and Delayed Morphisms." Journées d'Informatique Musicale (JIM 96), Île de Tatihou, May 1996 (HAL hal-02986050). The notebook links http://jim.afim-asso.org/jim96/actes/Allouche.ps; the examples notebook links the copy on OEIS, https://oeis.org/A000930/a000930.pdf (live, checked 8 Nov 2026).
+11. Narayana's cows sequence, OEIS A000930 (https://oeis.org/A000930), and the paper linked from the notebook: Allouche, Jean-Paul, and Tom Johnson. "Narayana's Cows and Delayed Morphisms." Journées d'Informatique Musicale (JIM 96), Île de Tatihou, May 1996 (HAL hal-02986050). The notebook links http://jim.afim-asso.org/jim96/actes/Allouche.ps (PostScript; live, checked 9 Nov 2026); the examples notebook also links a PDF copy on OEIS, https://oeis.org/A000930/a000930.pdf (live, checked 8 and 9 Nov 2026).
 
 **Used in the Phase 1 tests**
 
 12. Lucas's theorem (a binomial coefficient modulo a prime, from base-p digits); for p = 2 it gives: C(i + j, i) is odd exactly when i AND j = 0. https://en.wikipedia.org/wiki/Lucas%27s_theorem
 13. The multinomial theorem: the nodes of layer r of the d-dimensional default ndplex sum to d^r.
 
-*Link audit (Phase 5, `docs/phase5_examples.md` §6).* References 7 and 11 were checked on 8 Nov 2026; the rest are pending a run in Colab, whose results will be recorded there and here.
+*Link audit (Phase 5, `docs/phase5_examples.md` §6; checked in Colab on 9 Nov 2026).* All links above are live except reference 8, which is gone. The Stack Overflow links (references 1, 3 and 4) refused automated requests (HTTP 403), so they were not confirmed, but nothing suggests they are gone.
