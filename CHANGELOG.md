@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here. The project follows [Semantic Versioning](https://semver.org/); while the version is 0.x, minor releases may change the API.
 
+## Unreleased
+
+- **Examples notebook.** `notebooks/ndplex_examples.ipynb` runs the original notebook's examples on the package installed from PyPI, with working copies of `plot_ndplex` and `diag_as_hist` (fixed for current matplotlib) in a helper cell. Changes from the original notebook's examples, with migration notes, are in `docs/phase5_examples.md`. `ndplex_array.ipynb` is unchanged.
+- **The plotting `ImportError` names the examples notebook** (C13, amended): `plot_ndplex` and `diag_as_hist` still raise `ImportError`; the message now points to the helper cell of `notebooks/ndplex_examples.ipynb` instead of `ndplex_array.ipynb`.
+- **README.** An *Examples notebook* section with an *Open in Colab* link; the *Plotting* section points to the helper cell.
+- **Checks.** `tests/notebook_check.py` runs the examples notebook and compares it with the original notebook's saved outputs; the `checks` workflow runs it on demand.
+
 ## 0.1.0 (2026-11-08)
 
 First release, and the first version as a package. Before this, ndplex was the first code cell of `ndplex_array.ipynb` (Ted Teske, 2019–2024). The notebook's results are kept except where a change is listed below; each change is documented, with migration notes, in `docs/phase2_package.md`, `docs/phase3_ci.md` and `docs/phase4_release.md`.

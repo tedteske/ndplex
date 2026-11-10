@@ -20,6 +20,8 @@ This repository contains work of three kinds. They are kept apart so that credit
 - *Phase 3 tests and CI* (`.github/workflows/tests.yml`, `tests/test_platform.py`, `docs/phase3_ci.md`): the CI matrix (adapted from Ted's bounded-lognorm), the finding that overflow in narrow integer dtypes went unreported on NumPy < 2 and its fix (C12), and the platform tests.
 - *Phase 4 packaging and release* (`.github/workflows/publish.yml`, `README.md`, `CITATION.cff`, `tests/test_readme.py`, `docs/phase4_release.md`): the publish workflow (adapted from Ted's bounded-lognorm), the README rewritten as the package's documentation with its examples run as tests, the citation metadata, and the release procedure. The choice of Green (2015) as a general source, the Zenodo and CITATION decisions, and the release itself are Ted's.
 
+- *Phase 5 examples notebook* (`notebooks/ndplex_examples.ipynb`, `tests/notebook_check.py`, `docs/phase5_examples.md`): the port of the examples to the package, the Package notes, the fixes in the plotting-helper cell (`legend_handles`, the font set per figure, cycling colours, negative values drawn, the normal pdf in NumPy), the replacements for overflowing, `float128` and downloaded data (`dtype=object`, the primes from the notebook's own sieve), the fix to the nearest-prime search (N8), the check cell on residues modulo powers of 2, the finding that the original "Alien invasion" heatmap was partly wrong (N13), the notebook check and its mutation test, and the link audit. The examples themselves, their text, and the drawing code of `plot_ndplex` and `diag_as_hist` are Ted's (tier A), carried over unchanged except as listed in `docs/phase5_examples.md`.
+
 **C. Third-party work, cited below**
 
 Attribution suggestion, not a rule: the usual convention in published work is that an AI system is not listed as an author, since authorship carries accountability an AI cannot hold. The conventional form is to claim the work as your own and acknowledge AI assistance, e.g. *"The test suite and audit were developed with assistance from Claude (Anthropic)."*
@@ -39,20 +41,20 @@ Attribution suggestion, not a rule: the usual convention in published work is th
 
 3. `sum_digits`, from Andreas K.'s answer to Stack Overflow question 48817036. https://stackoverflow.com/questions/48817036
 4. `primesfrom2to`, from an answer to Stack Overflow question 2068372. https://stackoverflow.com/questions/2068372
-5. The first 1000 primes, downloaded from a GitHub gist by cblanc. https://gist.github.com/cblanc/46ebbba6f42f61e60666
+5. The first 1000 primes, downloaded from a GitHub gist by cblanc. https://gist.github.com/cblanc/46ebbba6f42f61e60666 — the examples notebook computes them with `primesfrom2to` (reference 4) instead, so it needs no download. The gist's 1000 numbers equal the sieve's (checked in Colab, 9 Nov 2026).
 
 **Mathematics and sources cited in the notebook**
 
 6. The On-Line Encyclopedia of Integer Sequences (OEIS). https://oeis.org — the source of the sequence names `oeis()` prints; its text output format is described at https://oeis.org/eishelp1.html.
-7. Pascal's triangle and the bell curve. AMS Feature Column. http://www.ams.org/publicoutreach/feature-column/fcarc-normal
-8. Pascal's triangle modulo n (Sierpinski's gasket). http://orion.math.iastate.edu/reu/oldREU/modupasc.htm
+7. Phillips, Tony. "From Pascal's Triangle to the Bell-shaped Curve." AMS Feature Column, May 2010. https://www.ams.org/publicoutreach/feature-column/fcarc-normal (the notebook links it as http://, which refused automated requests from Colab; live at https, checked 8 and 9 Nov 2026).
+8. Pascal's triangle modulo n (Sierpinski's gasket), Iowa State REU. http://orion.math.iastate.edu/reu/oldREU/modupasc.htm — **no longer online** (it redirects to the department's home page; checked 9 Nov 2026). The examples notebook links Wikipedia's "Sierpiński triangle" instead: https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle
 9. Hypercube; Simplex. Wikipedia. https://en.wikipedia.org/wiki/Hypercube, https://en.wikipedia.org/wiki/Simplex
 10. Green, Thomas M. *The Simplex, Duplex and Pascal's Triangles: Relatives of Pascal's Triangle, with Excursions Into Hyperspace*. CreateSpace Independent Publishing Platform, 2015. 176 pp. ISBN 9781514677094. https://books.google.com/books/about/The_Simplex_Duplex_and_Pascal_s_Triangle.html?id=P0cDswEACAAJ (also cited in the notebook, via https://www.amazon.com/Simplex-Duplex-Pascals-Triangles-Excursions/dp/1514677091). **A general source for the project** (see the note above), not only for the notebook section that cites it.
-11. Narayana's cows sequence, OEIS A000930 (https://oeis.org/A000930), and the paper linked from the notebook (JIM 96 proceedings). http://jim.afim-asso.org/jim96/actes/Allouche.ps
+11. Narayana's cows sequence, OEIS A000930 (https://oeis.org/A000930), and the paper linked from the notebook: Allouche, Jean-Paul, and Tom Johnson. "Narayana's Cows and Delayed Morphisms." Journées d'Informatique Musicale (JIM 96), Île de Tatihou, May 1996 (HAL hal-02986050). The notebook links http://jim.afim-asso.org/jim96/actes/Allouche.ps (PostScript; live, checked 9 Nov 2026); the examples notebook also links a PDF copy on OEIS, https://oeis.org/A000930/a000930.pdf (live, checked 8 and 9 Nov 2026).
 
 **Used in the Phase 1 tests**
 
 12. Lucas's theorem (a binomial coefficient modulo a prime, from base-p digits); for p = 2 it gives: C(i + j, i) is odd exactly when i AND j = 0. https://en.wikipedia.org/wiki/Lucas%27s_theorem
 13. The multinomial theorem: the nodes of layer r of the d-dimensional default ndplex sum to d^r.
 
-*Links in the notebook have not yet been checked; a link audit is planned with the examples notebook (Phase 5).*
+*Link audit (Phase 5, `docs/phase5_examples.md` §6; checked in Colab on 9 Nov 2026).* All links above are live except reference 8, which is gone. The Stack Overflow links (references 1, 3 and 4) refused automated requests (HTTP 403), so they were not confirmed, but nothing suggests they are gone.

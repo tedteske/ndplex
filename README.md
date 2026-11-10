@@ -146,9 +146,15 @@ matches = oeis(ndplex(5), quiet=True)        # a list of (A-number, name) or Non
 
 The output has one line per row, for example `row 2: https://oeis.org/A000217 Triangular numbers: ...`. The names come from OEIS and can change. If oeis.org cannot be reached or refuses the request, the row's line says `lookup failed (...)`. Each request identifies itself to oeis.org as `ndplex/<version>`.
 
+## Examples notebook
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tedteske/ndplex/blob/master/notebooks/ndplex_examples.ipynb)
+
+[`notebooks/ndplex_examples.ipynb`](https://github.com/tedteske/ndplex/blob/master/notebooks/ndplex_examples.ipynb) installs ndplex from PyPI and runs the examples from the original notebook: Pascal's triangle and tetrahedron, other edges and rules, diagonals and ratios, heatmaps and modular arithmetic, the simplex, duplex and triplex triangles, binomial-to-normal histograms, Fibonacci and Narayana's cows, a rental-rate model, and patterns among the primes. Open it in Colab with the badge above and choose Runtime → Run all.
+
 ## Plotting
 
-From 0.1.0, plotting is left to the user, so `import ndplex` needs only NumPy. The notebook's `plot_ndplex` and `diag_as_hist` are in [`ndplex_array.ipynb`](https://github.com/tedteske/ndplex/blob/master/ndplex_array.ipynb) in the repository; an examples notebook that installs from PyPI is planned.
+From 0.1.0, plotting is left to the user, so `import ndplex` needs only NumPy. Working copies of the original notebook's `plot_ndplex` and `diag_as_hist`, fixed for current matplotlib, are in the helper cell of the [examples notebook](https://github.com/tedteske/ndplex/blob/master/notebooks/ndplex_examples.ipynb). They need only NumPy and matplotlib.
 
 ## Changes from the notebook
 

@@ -46,10 +46,12 @@ def test_oeis_is_loaded_on_first_use():
 @pytest.mark.parametrize("name", ["plot_ndplex", "diag_as_hist"])
 def test_plotting_functions_left_the_package(name):
     """Decision (Phase 2): plotting is left to the user. The old names fail
-    with a message pointing to the notebook in the repository (Phase 4,
-    C13: until the examples notebook exists, the original notebook)."""
+    with a message pointing to the working copies in the examples notebook
+    (C13; Phase 4 pointed it at the original notebook until the examples
+    notebook existed, Phase 5 at the examples notebook)."""
     with pytest.raises(ImportError,
-                       match=r"ndplex_array\.ipynb.*github\.com/tedteske/ndplex"):
+                       match=r"github\.com/tedteske/ndplex/blob/master/"
+                             r"notebooks/ndplex_examples\.ipynb"):
         exec(f"from ndplex import {name}", {})
 
 

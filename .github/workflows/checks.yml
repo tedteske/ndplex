@@ -57,3 +57,33 @@ jobs:
 
       - name: Run the differential check
         run: python tests/differential_check.py
+
+  examples:
+    name: Examples notebook (outputs vs the original notebook's)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      # The notebook's first cell runs `pip install ndplex`; with the
+      # checked-out package already installed, that is satisfied by it, so
+      # this checks the branch's code. The oeis cells need oeis.org and are
+      # reported, not counted as failures.
+      - name: Install the package and the notebook's dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install . matplotlib seaborn pandas nbclient nbformat ipykernel
+
+      - name: Run the notebook and compare
+        run: python tests/notebook_check.py --save executed.ipynb
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: examples-executed
+          path: executed.ipynb
