@@ -1,6 +1,6 @@
 # ndplex — Phase 5: The examples notebook
 
-**Status:** `notebooks/ndplex_examples.ipynb` built and checked against ndplex 0.1.0 from PyPI, here and in Colab (9 Nov 2026, §4); oeis cells and link audit done (§4, §6). The plotting `ImportError` and the README point to the notebook (C13, amended). Merged (PR #14). 0.1.1 is ready to release (§8, §10).
+**Status:** `notebooks/ndplex_examples.ipynb` built and checked against ndplex 0.1.0 from PyPI, here and in Colab (9 Nov 2026, §4); oeis cells and link audit done (§4, §6). The plotting `ImportError` and the README point to the notebook (C13, amended). Merged (PR #14). Released as ndplex 0.1.1 on 10 Nov 2026 (UTC), on PyPI and Zenodo; the release record is §11.
 
 **Carried over from Phase 4** (PRs #11–#13, master at `ddab8eb`): ndplex 0.1.0 on PyPI (8 Nov 2026, from `v0.1.0` at `2c32bc8`) and Zenodo (concept DOI 10.5281/zenodo.24054477); `oeis` names itself to oeis.org (C14); the suite (194 tests), CI and the publish workflow; the to-do lists in `docs/phase2_package.md` §9, `docs/phase3_ci.md` §8 and `docs/phase4_release.md` §10. `ndplex_array.ipynb` is unchanged and stays as the record of the original work.
 
@@ -99,11 +99,10 @@ Ted, 9 Nov 2026: merge PR #14 (merged as `1bac08e`) and release 0.1.1, so that t
 ## 9. For later
 
 - Optional: open the four Stack Overflow links in a browser to confirm them (§6).
-- After 0.1.1 is published: check a clean install from PyPI, and open the PR that records the release, its Zenodo DOI and `date-released` (§10).
 
 ## 10. Releasing 0.1.1
 
-**The release PR** sets `__version__` to 0.1.1, `version: 0.1.1` in `CITATION.cff` (`date-released` comes back in the post-release PR, as in Phase 4), and the CHANGELOG heading *0.1.1 (2026-11-09)*. It changes the version test to 0.1.1, and adds `test_release_metadata_matches_version`: `CITATION.cff` and the latest CHANGELOG heading must name the package's version. Without the test change, the publish workflow would have failed at the suite (*Run*: the version test failed against the 0.1.1 wheel). Changing each of the three version strings in turn fails the new test (*Run*).
+**The release PR** (#15, merged as `986a882`) sets `__version__` to 0.1.1, `version: 0.1.1` in `CITATION.cff` (`date-released` comes back in the post-release PR, as in Phase 4), and the CHANGELOG heading *0.1.1 (2026-11-09)*. It changes the version test to 0.1.1, and adds `test_release_metadata_matches_version`: `CITATION.cff` and the latest CHANGELOG heading must name the package's version. Without the test change, the publish workflow would have failed at the suite (*Run*: the version test failed against the 0.1.1 wheel). Changing each of the three version strings in turn fails the new test (*Run*).
 
 **No TestPyPI dry run this time.** The package's code differs from 0.1.0 only in the `ImportError` message (`git diff v0.1.0 master -- src/`). The publish path (OIDC upload, the `pypi` approval, Zenodo) worked for 0.1.0, and the build, tag check and suite run again before the approval point. Replayed here (*Run*): the build, `twine check --strict` (both files pass), the tag check (accepts `v0.1.1`, rejects `v0.1.0`), and the suite against the wheel in a fresh environment.
 
@@ -118,3 +117,12 @@ Ted, 9 Nov 2026: merge PR #14 (merged as `1bac08e`) and release 0.1.1, so that t
 > ndplex 0.1.1 adds an examples notebook, `notebooks/ndplex_examples.ipynb`: the original notebook's examples, run on the package installed from PyPI, with working copies of the plotting helpers `plot_ndplex` and `diag_as_hist`. Open it in Colab from the README.
 >
 > The `ImportError` raised by `from ndplex import plot_ndplex` (or `diag_as_hist`) now points to that notebook instead of the original one. Nothing else in the package changed. Details: CHANGELOG.md and docs/phase5_examples.md in the repository.
+
+## 11. Release record: 0.1.1
+
+- **CI:** the release commit `986a882` (merge of PR #15): all 11 jobs of `tests.yml` passed.
+- **PyPI release:** GitHub release `v0.1.1` at `986a882`, published by Ted at 2026-11-10 01:21:41 UTC (19:21 on 9 Nov in Oklahoma City). Publish run 42735239825: the build job (tag check, `twine check --strict`, the suite against the built wheel) passed at 01:22 UTC. The `pypi` job, approved by Ted, uploaded at 01:26 UTC. https://pypi.org/project/ndplex/0.1.1/
+- **Files on PyPI:** `ndplex-0.1.1-py3-none-any.whl` (sha256 `6ca0e84e1aac0e35aa2249642f4ad8a297fab1d9bb16a11438796721c52b108a`) and `ndplex-0.1.1.tar.gz` (sha256 `f432cb126893cecb451b43660e3650e65c4893aa3f7e57bda5f4bba4160b013b`). Both carry PyPI provenance attestations naming publisher GitHub `tedteske/ndplex`, workflow `publish.yml`. PyPI lists `Requires-Python >=3.10`, `numpy>=1.23.5` and license MIT; versions 0.1.0 and 0.1.1, latest 0.1.1.
+- **Check after release** (*Run*, Linux, 10 Nov UTC): both files downloaded from PyPI match their published sha256. `ndplex==0.1.1` from PyPI, installed into clean environments with no package cache, gave 0.1.1 from `site-packages` on Python 3.13.18 with NumPy 2.5.4 and on Python 3.10.20 with NumPy 1.23.5. On both: the `ImportError` names the examples notebook, and `oeis` identifies itself as `ndplex/0.1.1`. The sdist's suite, run against each install, gave 193 passed, 2 skipped (matplotlib not installed; the original notebook, not in the sdist), including the new release-metadata test. The examples notebook, run against 0.1.1 from PyPI, prints `ndplex 0.1.1`, and its 133 offline cells match the original (`tests/notebook_check.py`).
+- **Zenodo:** version 0.1.1 is [10.5281/zenodo.24095480](https://doi.org/10.5281/zenodo.24095480) (as given by Ted from the Zenodo record; Zenodo and doi.org cannot be reached from here, so it was not resolved here). It is in `CITATION.cff` (`identifiers`) and the README's Citing section. The concept DOI, 10.5281/zenodo.24054477, now resolves to 0.1.1 (*Argued*, from how Zenodo concept DOIs work).
+- **Date:** `date-released` in `CITATION.cff` and the CHANGELOG heading are 2026-11-10, the UTC date in the GitHub, PyPI and Zenodo records. The release PR had 2026-11-09, Ted's local date, so the 0.1.1 sdist on PyPI carries that date in its CHANGELOG; only this record PR changes it.
