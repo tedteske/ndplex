@@ -3,8 +3,10 @@ Package-level checks (Phase 2): the public names, lazy loading of oeis, the
 private module names, and the plotting functions that left the package.
 """
 import importlib
+import re
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -62,4 +64,19 @@ def test_unknown_attribute():
 
 def test_version_string():
     parts = impl.__version__.split(".")
-    assert parts[:3] == ["0", "1", "0"]
+    assert parts[:3] == ["0", "1", "1"]
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_release_metadata_matches_version():
+    """Phase 5: CITATION.cff and CHANGELOG.md name the package's version, so
+    a release cannot ship with them out of step (dev versions are checked
+    by their base version)."""
+    base = ".".join(impl.__version__.split(".")[:3])
+    citation = (ROOT / "CITATION.cff").read_text(encoding="utf-8")
+    assert re.search(rf"^version: {re.escape(base)}$", citation, re.M)
+    changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    headings = re.findall(r"^## (\S+)", changelog, re.M)
+    assert headings[0] == base, f"latest CHANGELOG heading is {headings[0]}"

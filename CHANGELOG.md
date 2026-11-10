@@ -2,7 +2,9 @@
 
 All notable changes to this project are documented here. The project follows [Semantic Versioning](https://semver.org/); while the version is 0.x, minor releases may change the API.
 
-## Unreleased
+## 0.1.1 (2026-11-09)
+
+The examples notebook, and the plotting `ImportError` pointing to it. No other change to the package: its code differs from 0.1.0 only in that message.
 
 - **Examples notebook.** `notebooks/ndplex_examples.ipynb` runs the original notebook's examples on the package installed from PyPI, with working copies of `plot_ndplex` and `diag_as_hist` (fixed for current matplotlib) in a helper cell. Changes from the original notebook's examples, with migration notes, are in `docs/phase5_examples.md`. `ndplex_array.ipynb` is unchanged.
 - **The plotting `ImportError` names the examples notebook** (C13, amended): `plot_ndplex` and `diag_as_hist` still raise `ImportError`; the message now points to the helper cell of `notebooks/ndplex_examples.ipynb` instead of `ndplex_array.ipynb`.

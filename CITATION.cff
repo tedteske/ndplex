@@ -12,8 +12,7 @@ abstract: >-
 authors:
   - family-names: Teske
     given-names: Ted
-version: 0.1.0
-date-released: "2026-11-08"
+version: 0.1.1
 license: MIT
 # Concept DOI: all versions, always resolving to the latest. Each release's
 # own DOI is listed on that Zenodo record (0.1.0: 10.5281/zenodo.24054478).
