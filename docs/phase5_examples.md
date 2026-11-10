@@ -66,7 +66,7 @@ Cell numbers are 0-based positions in `ndplex_array.ipynb`, as in `tests/` and t
 
 Every link in `ndplex_array.ipynb`, `ATTRIBUTION.md` and the examples notebook: 44 URLs. Each was fetched in Colab by `phase5_link_check.ipynb` (run by Ted, 9 Nov 2026; not committed): first with a header naming ndplex, then, if refused, as a browser. A few were also fetched from here (8 Nov). *Run*, true for those networks on those days.
 
-39 of the 44 answered 200, but one of those (Iowa State) only after redirecting to an unrelated page. So: 38 live, 1 dead, and 5 refused (the four Stack Overflow links, and the AMS article's old `http://` address, which works at `https://`).
+39 of the 44 answered 200, but one of those (Iowa State) only after redirecting to an unrelated page. So: 38 live, 1 dead, and 5 refused (the four Stack Overflow links, and the AMS article's old `http://` address, which works at `https://`). Ted then opened the four Stack Overflow links in a browser, and all four work (9 Nov 2026), so 42 of the 44 are live.
 
 **Live (38):**
 
@@ -82,7 +82,7 @@ Every link in `ndplex_array.ipynb`, `ATTRIBUTION.md` and the examples notebook: 
 
 - `http://orion.math.iastate.edu/reu/oldREU/modupasc.htm` (Iowa State REU, *Pascal's triangle modulo n*) redirects to the Iowa State mathematics department's home page. The page is gone. Search finds other old REU files under `reu.math.iastate.edu/oldREU/`, but I could not fetch that address for this page from here (*Not checked*). The examples notebook replaces the link with Wikipedia's *Sierpiński triangle* and says the original is no longer online.
 
-**Refused, not shown dead (4):** the four Stack Overflow links (questions 2068372, with answer 3035188 for `primesfrom2to`, 48817036 and 55917328) answered 403 to both requests. Stack Overflow refuses many automated requests, and question 2068372, *Fastest way to list all primes below N*, appears in Stack Overflow archive copies from 2021 and 2023. Opening the four links in a browser would confirm them. They are unchanged in the examples notebook.
+**Refused automated requests, live in a browser (4):** the four Stack Overflow links (questions 2068372, with answer 3035188 for `primesfrom2to`, 48817036 and 55917328) answered 403 to both requests. Stack Overflow refuses many automated requests, and question 2068372, *Fastest way to list all primes below N*, appears in Stack Overflow archive copies from 2021 and 2023. Ted opened all four in a browser on 9 Nov 2026, and they work. They are unchanged in the examples notebook.
 
 **Changes in the examples notebook** (E12): the Iowa State link replaced; `http://` → `https://` for OEIS, ColorBrewer and the AMS article; full citations added for Green (2015), the AMS article and Allouche and Johnson.
 
@@ -98,7 +98,7 @@ Ted, 9 Nov 2026: merge PR #14 (merged as `1bac08e`) and release 0.1.1, so that t
 
 ## 9. For later
 
-- Optional: open the four Stack Overflow links in a browser to confirm them (§6).
+- Nothing open from Phase 5.
 
 ## 10. Releasing 0.1.1
 
