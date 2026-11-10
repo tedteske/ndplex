@@ -168,7 +168,7 @@ The packaging, tests and audit (2026) were developed with assistance from Claude
 
 ## Citing
 
-If you use ndplex in published work, please cite it. GitHub's "Cite this repository" button gives APA and BibTeX from [`CITATION.cff`](https://github.com/tedteske/ndplex/blob/master/CITATION.cff). Releases are archived on Zenodo: [10.5281/zenodo.24054477](https://doi.org/10.5281/zenodo.24054477) cites all versions (and resolves to the latest); each version also has its own DOI, listed on that record, for citing the exact release you used (0.1.0: [10.5281/zenodo.24054478](https://doi.org/10.5281/zenodo.24054478)).
+If you use ndplex in published work, please cite it. GitHub's "Cite this repository" button gives APA and BibTeX from [`CITATION.cff`](https://github.com/tedteske/ndplex/blob/master/CITATION.cff). Releases are archived on Zenodo: [10.5281/zenodo.24054477](https://doi.org/10.5281/zenodo.24054477) cites all versions (and resolves to the latest); each version also has its own DOI, listed on that record, for citing the exact release you used (0.1.0: [10.5281/zenodo.24054478](https://doi.org/10.5281/zenodo.24054478); 0.1.1: [10.5281/zenodo.24095480](https://doi.org/10.5281/zenodo.24095480)).
 
 ## License
 

@@ -13,9 +13,11 @@ authors:
   - family-names: Teske
     given-names: Ted
 version: 0.1.1
+date-released: "2026-11-10"
 license: MIT
 # Concept DOI: all versions, always resolving to the latest. Each release's
-# own DOI is listed on that Zenodo record (0.1.0: 10.5281/zenodo.24054478).
+# own DOI is listed on that Zenodo record (0.1.0: 10.5281/zenodo.24054478;
+# 0.1.1: 10.5281/zenodo.24095480).
 doi: 10.5281/zenodo.24054477
 identifiers:
   - type: doi
@@ -24,6 +26,9 @@ identifiers:
   - type: doi
     value: 10.5281/zenodo.24054478
     description: "ndplex 0.1.0"
+  - type: doi
+    value: 10.5281/zenodo.24095480
+    description: "ndplex 0.1.1"
 repository-code: "https://github.com/tedteske/ndplex"
 url: "https://pypi.org/project/ndplex/"
 keywords:

@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented here. The project follows [Semantic Versioning](https://semver.org/); while the version is 0.x, minor releases may change the API.
 
-## 0.1.1 (2026-11-09)
+## 0.1.1 (2026-11-10)
 
 The examples notebook, and the plotting `ImportError` pointing to it. No other change to the package: its code differs from 0.1.0 only in that message.
 
